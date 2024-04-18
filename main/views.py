@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import AccountCharge
+from .models import AccountCharge , Payment
 from .serializers import AccountChargeSerializer
 
 #? sandbox merchant 
@@ -47,7 +47,10 @@ class PayAPIView(APIView):
         data = request.data
         amount = data.get('amount')
         period = data.get('period')
-        # Check if any data is provided
+        uniqueId =  data.get('uniqueId')
+        phone =  data.get('phone')
+        name = data.get('name')
+        id = data.get('id')
         if not data:
             return Response({'error': 'No data provided'}, status=400)
 
@@ -55,25 +58,40 @@ class PayAPIView(APIView):
         try:
             # Assuming you want to save the received data as is
             settings = AccountCharge.objects.filter(amount=amount, period=period).latest('timestamp')
+            amount = int(settings.amount)
+
+            payment = Payment.objects.create(
+                unique_id=uniqueId,
+                name=name,
+                id_number=id,
+                phone=phone,
+                period=period,
+                amount=amount,
+                status="معلق",  # Set initial status as pending or pending approval
+            )
+            request.session['payment_id'] = payment.id
 
             response_data = send_request_logic(
-                str(settings.amount),
+                amount,
                 settings.description,
                 'YOUR_PHONE_NUMBER',
-                'http://127.0.0.1:8000/verify/'
+                'http://127.0.0.1:8000/verify/',
             )
 
-            # saved_data = data
+            if response_data.get('status'):
+                # Payment request successful
+                return Response({'message': 'Payment request successful'})
+            else:
+                # Payment request failed
+                return Response({'error': 'Payment request failed'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # response_data = send_request_logic(1000, "توضیحات مربوط به تراکنش را در این قسمت وارد کنید", 'YOUR_PHONE_NUMBER', 'http://127.0.0.1:8000/verify/')
-            
-            return Response(response_data)  # Return the response from send_request_logic
         except Exception as e:
-            return Response({'error': f"Error saving data: {e}"}, status=500)
+            return Response({'error': f"Error processing payment: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
-def send_request_logic(amount , description , phone , CallbackURL ):
+
+def send_request_logic(amount, description, phone, CallbackURL):
     data = {
         "MerchantID": settings.MERCHANT,
         "Amount": amount,
@@ -82,16 +100,15 @@ def send_request_logic(amount , description , phone , CallbackURL ):
         "CallbackURL": CallbackURL,
     }
     data = json.dumps(data)
-    # set content length by data
     headers = {'content-type': 'application/json', 'content-length': str(len(data))}
     try:
         response = requests.post(ZP_API_REQUEST, data=data, headers=headers, timeout=10)
         response_data = response.json()
         if response.status_code == 200:
-            if response_data['Status'] == 100:
+            if response_data.get('Status') == 100:  # Using .get() to avoid KeyError
                 return {'status': True, 'url': ZP_API_STARTPAY + str(response_data['Authority']), 'authority': response_data['Authority']}
             else:
-                return {'status': False, 'code': str(response_data['Status'])}
+                return {'status': False, 'code': str(response_data.get('Status', ''))}
         else:
             return {'status': False, 'code': response.status_code}
 
@@ -101,7 +118,8 @@ def send_request_logic(amount , description , phone , CallbackURL ):
         return {'status': False, 'code': 'connection error'}
 
 
-# class SendRequestAPIView(APIView):
+
+class SendRequestAPIView(APIView):
     def get(self, request):
         amount = 1000  # Rial / Required
         description = "توضیحات مربوط به تراکنش را در این قسمت وارد کنید"  # Required
@@ -116,6 +134,7 @@ def send_request_logic(amount , description , phone , CallbackURL ):
             "CallbackURL": CallbackURL,
         }
         data = json.dumps(data)
+
         # set content length by data
         headers = {'content-type': 'application/json', 'content-length': str(len(data))}
         try:
@@ -136,6 +155,19 @@ def send_request_logic(amount , description , phone , CallbackURL ):
 
 class VerifyAPIView(APIView):
     def get(self, request):
+        # Retrieve payment ID from session
+        payment_id = request.session.get('payment_id')
+        
+        if not payment_id:
+            return Response({'error': 'Payment ID not found in session'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Retrieve payment object
+        try:
+            payment = Payment.objects.get(pk=payment_id)
+        except Payment.DoesNotExist:
+            return Response({'error': 'Payment not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Perform payment verification
         amount = 1000  # Rial / Required (you may adjust this)
         authority = request.GET.get('Authority')
         if not authority:
@@ -147,15 +179,20 @@ class VerifyAPIView(APIView):
             "Authority": authority,
         }
         data = json.dumps(data)
-        # set content length by data
         headers = {'content-type': 'application/json', 'content-length': str(len(data))}
         try:
             response = requests.post(ZP_API_VERIFY, data=data, headers=headers)
             response_data = response.json()
             if response.status_code == 200:
                 if response_data['Status'] == 100:
+                    # Payment successful, update payment status
+                    payment.status = "موفق"  # Set status as successful
+                    payment.save()
                     return Response({'status': True, 'RefID': response_data['RefID']})
                 else:
+                    # Payment unsuccessful, update payment status
+                    payment.status = "ناموفق"  # Set status as unsuccessful
+                    payment.save()
                     return Response({'status': False, 'code': str(response_data['Status'])})
             else:
                 return Response({'status': False, 'code': response.status_code})

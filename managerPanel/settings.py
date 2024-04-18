@@ -132,4 +132,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MERCHANT = "0a36c5ed-3774-4631-ada6-39b885d738a4"
 
-SANDBOX = True
+SANDBOX = False
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'uzradyab',
+        'USER': 'alirezaHT',
+        'PASSWORD': 'A9154284393a@',
+        'HOST': '62.106.95.119',  # Or your database host
+        'PORT': '5432',       # Or your database port
+    }
+}

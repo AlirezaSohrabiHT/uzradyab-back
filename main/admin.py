@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import Payment , AccountCharge
 
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('unique_id', 'name', 'id_number', 'phone', 'period', 'amount' , 'payment_code' , 'verification_code' , 'timestamp')
+    list_display = ('unique_id', 'name', 'status' , 'id_number', 'phone', 'period', 'amount' , 'payment_code' , 'verification_code' , 'timestamp')
     list_filter = ('timestamp',)  # Optional: Add filters for timestamp
     search_fields = ('unique_id', 'name', 'id_number')  # Optional: Add search fields
 

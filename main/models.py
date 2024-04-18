@@ -5,11 +5,12 @@ class Payment(models.Model):
     unique_id = models.CharField(max_length=100, verbose_name="شناسه یکتا", default="")
     name = models.CharField(max_length=100, verbose_name="نام", default="")
     id_number = models.CharField(max_length=100, verbose_name="شناسه", default="")
-    phone = models.CharField(max_length=20, verbose_name="شماره تلفن", default="")
-    period = models.CharField(max_length=20, verbose_name="مدت زمان", default="")
-    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="مقدار", default=None)
+    phone = models.CharField(max_length=50, verbose_name="شماره تلفن", default="")
+    period = models.CharField(max_length=100, verbose_name="مدت زمان", default="")
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="مقدار پرداخت", default=None)
     payment_code = models.CharField(max_length=100, verbose_name="کد پرداخت", default="")
     verification_code = models.CharField(max_length=100, verbose_name="کد تایید", default="")
+    status = models.CharField(max_length=100, verbose_name="وضعیت پرداخت", default="")
     timestamp = models.DateTimeField(auto_now_add=True, verbose_name="زمان") 
 
     def __str__(self):
