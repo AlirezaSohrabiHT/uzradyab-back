@@ -253,6 +253,9 @@ class PayAPIView(APIView):
         name = data.get('name')
         id_number = data.get('id')
         
+        global CallbackURL  # Access the global variable 'CallbackURL' inside the method
+        if not CallbackURL.endswith(str(id_number)):
+            CallbackURL += str(id_number)
         # Check if any data is provided
         if not data:
             return Response({'error': 'No data provided'}, status=400)
@@ -274,7 +277,7 @@ class PayAPIView(APIView):
                 amount,
                 settings.description,
                 'YOUR_PHONE_NUMBER',
-                'http://localhost:3000/settings/device/',
+                CallbackURL,
                 payment.id,
             )
 
@@ -302,8 +305,6 @@ def send_request_logic(amount, description, phone, CallbackURL, uniqueId):
             if response_data.get('Status') == 100:
                 # Update payment code based on uniqueId
                 Payment.objects.filter(id=uniqueId).update(payment_code=response_data.get('Authority'))
-                start_time = time.time()
-                verification_response = Verify(response_data.get('Authority'))
                 return {'status': True, 'url': ZP_API_STARTPAY + str(response_data.get('Authority')), 'authority': response_data.get('Authority')}
             else:
                 return {'status': False, 'code': str(response_data.get('Status'))}
@@ -318,6 +319,7 @@ def send_request_logic(amount, description, phone, CallbackURL, uniqueId):
 def Verify(authority):
     global amount  # Access the global variable 'amount' inside the method
     authority = authority
+    period = Payment.objects.filter(payment_code=authority).latest('timestamp')
     print(authority)
     if not authority:
         return JsonResponse({'status': False, 'code': 'Authority not provided'})
@@ -343,7 +345,8 @@ def Verify(authority):
                     payment.status = "موفق"  # Set status as successful
                     payment.verification_code = response_data['RefID']
                     payment.save()
-                    return JsonResponse({'status': True, 'RefID': response_data['RefID']})
+              
+                    return JsonResponse({'status': True, 'RefID': response_data['RefID'] , 'period': period})
                 except Payment.DoesNotExist:
                     print(authority)
                     return JsonResponse({'status': False, 'code': 'Payment not found'})
@@ -399,11 +402,10 @@ class SendRequestAPIView(APIView):
 
 
 class VerifyAPIView(APIView):
-    def get(self, request):
+    def post(self, request):
         global amount  # Access the global variable 'amount' inside the method
-        
-        amount = 5000  # Rial / Required (you may adjust this)
-        authority = request.GET.get('Authority')
+        data = request.data
+        authority = data.get('Authority')
         if not authority:
             return Response({'status': False, 'code': 'Authority not provided'})
 

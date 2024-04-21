@@ -9,7 +9,7 @@ class PaymentAdmin(admin.ModelAdmin):
 admin.site.register(Payment, PaymentAdmin)
 
 class AccountChargeAdmin(admin.ModelAdmin):
-    list_display = ('period', 'amount', 'duration_months', 'timestamp')
+    list_display = ('period', 'amount', 'duration_days', 'timestamp')
     search_fields = ('period', 'amount')
     list_filter = ('period', 'timestamp')
 

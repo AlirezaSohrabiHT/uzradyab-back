@@ -4,4 +4,4 @@ from .models import AccountCharge
 class AccountChargeSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccountCharge
-        fields = ('amount', 'duration_months', 'period')
+        fields = ('amount', 'duration_days', 'period')

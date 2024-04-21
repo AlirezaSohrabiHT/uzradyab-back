@@ -132,7 +132,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MERCHANT = "0a36c5ed-3774-4631-ada6-39b885d738a4"
 
-SANDBOX = True
+SANDBOX = False
 
 DATABASES = {
     'default': {
