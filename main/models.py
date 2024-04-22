@@ -11,7 +11,8 @@ class Payment(models.Model):
     payment_code = models.CharField(max_length=100, verbose_name="کد پرداخت", default="")
     verification_code = models.CharField(max_length=100, verbose_name="کد تایید", default="")
     status = models.CharField(max_length=100, verbose_name="وضعیت پرداخت", default="")
-    timestamp = models.DateTimeField(auto_now_add=True, verbose_name="زمان") 
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name="زمان")
+    account_charge = models.ForeignKey('AccountCharge', on_delete=models.CASCADE, related_name='payments', verbose_name="شارژ حساب", null=True, blank=True)
 
     def __str__(self):
         return f"Payment of {self.amount} at {self.timestamp}"
@@ -29,11 +30,19 @@ class AccountCharge(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True, verbose_name="زمان")
 
     def __str__(self):
-        return f"AccountCharge ID: {self.pk}"
+        return f"دوره {self.period}"
 
     class Meta:
         verbose_name = "شارژ حساب"
         verbose_name_plural = "تنظیمات شارژ حساب‌ها"
+
+class UserSettings(models.Model):
+    id = models.CharField(max_length=100, primary_key=True)
+    background_color = models.CharField(max_length=20)  # You can adjust the max length as needed
+    
+    def __str__(self):
+        return f"Settings for {self.id}"
+
 
 # from django.db import models
 

@@ -210,8 +210,8 @@ from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import AccountCharge , Payment
-from .serializers import AccountChargeSerializer
+from .models import AccountCharge , Payment , UserSettings
+from .serializers import AccountChargeSerializer , UserSettingsSerializer
 import time
 
 #? sandbox merchant 
@@ -272,6 +272,7 @@ class PayAPIView(APIView):
                 period=period,
                 amount=amount,
                 status="معلق",  # Set initial status as pending or pending approval
+                account_charge=settings,
             )
             response_data = send_request_logic(
                 amount,
@@ -294,6 +295,7 @@ def send_request_logic(amount, description, phone, CallbackURL, uniqueId):
         "Phone": phone,
         "CallbackURL": CallbackURL,
     }
+    print(data)
     data = json.dumps(data)
     headers = {'content-type': 'application/json'}
     
@@ -304,7 +306,9 @@ def send_request_logic(amount, description, phone, CallbackURL, uniqueId):
         if response.status_code == 200:
             if response_data.get('Status') == 100:
                 # Update payment code based on uniqueId
+               
                 Payment.objects.filter(id=uniqueId).update(payment_code=response_data.get('Authority'))
+                
                 return {'status': True, 'url': ZP_API_STARTPAY + str(response_data.get('Authority')), 'authority': response_data.get('Authority')}
             else:
                 return {'status': False, 'code': str(response_data.get('Status'))}
@@ -365,6 +369,21 @@ def Verify(authority):
         return JsonResponse({'status': False, 'code': 'connection error'})
 
 
+class UserSettingsAPIView(APIView):
+    def post(self, request):
+        serializer = UserSettingsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+    def get(self, request, id):
+        try:
+            user_settings = UserSettings.objects.get(id=id)
+            serializer = UserSettingsSerializer(user_settings)
+            return Response(serializer.data)
+        except UserSettings.DoesNotExist:
+            return Response({'error': 'User settings not found'}, status=404)
 
 class SendRequestAPIView(APIView):
     def get(self, request):
@@ -401,6 +420,9 @@ class SendRequestAPIView(APIView):
 
 
 
+
+
+
 class VerifyAPIView(APIView):
     def post(self, request):
         global amount  # Access the global variable 'amount' inside the method
@@ -429,7 +451,8 @@ class VerifyAPIView(APIView):
                         payment.status = "موفق"  # Set status as successful
                         payment.verification_code = response_data['RefID']
                         payment.save()
-                        return Response({'status': True, 'RefID': response_data['RefID']})
+                        duration_days = payment.account_charge.duration_days
+                        return Response({'status': True, 'RefID': response_data['RefID'] , 'duration_days' : duration_days})
                     except Payment.DoesNotExist:
                         print(authority)
                         return Response({'status': False, 'code': 'Payment not found'})
