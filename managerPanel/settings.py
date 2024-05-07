@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
+import os
+
 
 from pathlib import Path
 
@@ -25,7 +27,14 @@ SECRET_KEY = 'django-insecure-!lz1ztarurm_u8(^k5lol_fp^5_59ap^w03lh!z-k^)3k_(svs
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = ['*']
+
+CORS_ALLOWED_ORIGINS = [
+    "http://uzradyab.ir",
+    "http://app.uzradyab.ir",
+        "http://localhost:3000",
+]
 
 
 # Application definition
@@ -115,13 +124,13 @@ USE_I18N = True
 
 USE_TZ = True
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+
+STATIC_URL = '/static/'
+STATIC_ROOT = '/opt/traccar/web/static/'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -134,6 +143,9 @@ MERCHANT = "0a36c5ed-3774-4631-ada6-39b885d738a4"
 
 SANDBOX = True
 
+
+
+# local DB
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -144,3 +156,17 @@ DATABASES = {
         'PORT': '5432',       # Or your database port
     }
 }
+
+
+# server DB 
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'uzradyab',
+#         'USER': 'admin',
+#         'PASSWORD': '93DOoo4*£6uW',
+#         'HOST': '127.0.0.1',  # Or your database host
+#         'PORT': '5432',       # Or your database port
+#     }
+# }
