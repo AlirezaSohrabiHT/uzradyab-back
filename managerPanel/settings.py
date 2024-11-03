@@ -30,18 +30,35 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+
 CORS_ALLOWED_ORIGINS = [
     "http://uzradyab.ir",
+    "https://app.uzradyab.ir",
     "http://app.uzradyab.ir",
-        "http://localhost:3000",
+    "http://localhost:3000",  # For development on localhost
+     "http://localhost:5173",  # For development on localhost
+     "https://sipaad.exirfirm.com"
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://app.uzradyab.ir',
+    'https://pay.uzradyab.ir',  # Add if you have requests originating from here as well
+    'http://localhost:3000',     # Add localhost for development
+    "http://localhost:5173",  # For development on localhost
+    "https://sipaad.exirfirm.com"
+]
+
+CSRF_COOKIE_SECURE = True  # Ensures CSRF cookies are only sent over HTTPS
+CSRF_COOKIE_SAMESITE = 'None'  # Allows the CSRF cookie to be sent cross-site
+SESSION_COOKIE_SECURE = True  # Ensures session cookies are only sent over HTTPS
 
 
 # Application definition
-
+TOKEN_EXPIRATION_TIME = None
 INSTALLED_APPS = [
     'main',
     'rest_framework',
+    'rest_framework.authtoken',
     "corsheaders",
     'django.contrib.admin',
     'django.contrib.auth',
@@ -49,6 +66,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'jalali_date',
 ]
 
 MIDDLEWARE = [
@@ -118,6 +136,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'fa-ir'
 
+# import locale
+# locale.setlocale(locale.LC_ALL, "Persian_Iran.UTF-8")
+
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
@@ -141,32 +162,48 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MERCHANT = "0a36c5ed-3774-4631-ada6-39b885d738a4"
 
-SANDBOX = True
+SANDBOX = False
 
 
 
 # local DB
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'uzradyab',
-        'USER': 'alirezaHT',
-        'PASSWORD': 'A9154284393a@',
-        'HOST': '62.106.95.119',  # Or your database host
-        'PORT': '5432',       # Or your database port
-    }
-}
-
-
-# server DB 
-
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': 'uzradyab',
-#         'USER': 'admin',
-#         'PASSWORD': '93DOoo4*£6uW',
-#         'HOST': '127.0.0.1',  # Or your database host
+#         'USER': 'postgres',
+#         'PASSWORD': '3h4wfv7ue9re',
+#         'HOST': '62.60.132.92',  # Or your database host
 #         'PORT': '5432',       # Or your database port
+#     },
+#     'uzradyab': {
+#         'ENGINE': 'django.db.backends.postgresql',  # secondary database engine
+#         'NAME': 'traccar',
+#         'USER': 'postgres',
+#         'PASSWORD': '3h4wfv7ue9re',
+#         'HOST': '62.60.132.92',
+#         'PORT': '5432',
 #     }
 # }
+
+
+# server DB 
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'uzradyab',
+        'USER': 'postgres',
+        'PASSWORD': '3h4wfv7ue9re',
+        'HOST': '127.0.0.1',  # Or your database host
+        'PORT': '5432',       # Or your database port
+    },
+    'uzradyab': {
+        'ENGINE': 'django.db.backends.postgresql',  # secondary database engine
+        'NAME': 'traccar',
+        'USER': 'postgres',
+        'PASSWORD': '3h4wfv7ue9re',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
+    }
+}
