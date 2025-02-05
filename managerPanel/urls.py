@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path , include
 from main.views import PayAPIView, VerifyAPIView, AccountChargeAPIView, SendRequestAPIView
 from uzradyabHandler.views import ExpiredDevicesView 
 
@@ -26,4 +26,6 @@ urlpatterns = [
     path('accountChargeList/', AccountChargeAPIView.as_view(), name='account_charge'),
     path('verify/', VerifyAPIView.as_view(), name='verify'),
     path('deviceExpired/', ExpiredDevicesView.as_view(), name='device_expired'),
+    path("otp/", include("otpmanager.urls")),  # Change "otp_app" to your actual app name
+
 ]
