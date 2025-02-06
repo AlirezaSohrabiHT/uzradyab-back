@@ -7,6 +7,7 @@ import random
 from kavenegar import KavenegarAPI, APIException, HTTPException
 from django.conf import settings
 from .models import OTP
+from datetime import timedelta
 
 @csrf_exempt
 def send_otp(request):
