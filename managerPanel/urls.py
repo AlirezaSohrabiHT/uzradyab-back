@@ -17,13 +17,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from main.views import PayAPIView,  VerifyAPIView , AccountChargeAPIView , SendRequestAPIView
+from django.urls import path , include
+from main.views import PayAPIView, VerifyAPIView, AccountChargeAPIView, SendRequestAPIView
+from uzradyabHandler.views import ExpiredDevicesView 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('pay/', PayAPIView.as_view(), name='pay'),
-    path('request/', SendRequestAPIView.as_view(), name='pay'),
-    path('accountChargeList/', AccountChargeAPIView.as_view(), name='pay'),
+    path('request/', SendRequestAPIView.as_view(), name='request'),
+    path('accountChargeList/', AccountChargeAPIView.as_view(), name='account_charge'),
     path('verify/', VerifyAPIView.as_view(), name='verify'),
     path('api/traccar/', include('traccar_calls.urls')),
     path('api/accounts/', include('accounts.urls')),
+    path('deviceExpired/', ExpiredDevicesView.as_view(), name='device_expired'),
+    path("otp/", include("otpmanager.urls")),  # Change "otp_app" to your actual app name
+
 ]

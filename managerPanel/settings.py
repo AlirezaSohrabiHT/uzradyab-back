@@ -25,23 +25,41 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-!lz1ztarurm_u8(^k5lol_fp^5_59ap^w03lh!z-k^)3k_(svs'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 
 ALLOWED_HOSTS = ['*']
 
+
 CORS_ALLOWED_ORIGINS = [
     "http://uzradyab.ir",
+    "https://app.uzradyab.ir",
     "http://app.uzradyab.ir",
     "http://localhost:3000",
     "http://localhost:5173",
 ]
 
 TRACCAR_API_URL = "https://app.uzradyab.ir/api"
+    "http://localhost:3000",  # For development on localhost
+    "http://localhost:5173",  # For development on localhost
+    "https://sipaad.exirfirm.com"
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://app.uzradyab.ir',
+    'https://pay.uzradyab.ir',  # Add if you have requests originating from here as well
+    'http://localhost:3000',     # Add localhost for development
+    "http://localhost:5173",  # For development on localhost
+    "https://sipaad.exirfirm.com"
+]
+
+CSRF_COOKIE_SECURE = True  # Ensures CSRF cookies are only sent over HTTPS
+CSRF_COOKIE_SAMESITE = 'None'  # Allows the CSRF cookie to be sent cross-site
+SESSION_COOKIE_SECURE = True  # Ensures session cookies are only sent over HTTPS
 
 
 # Application definition
-
+TOKEN_EXPIRATION_TIME = None
 INSTALLED_APPS = [
     'main',
     'rest_framework',
@@ -55,11 +73,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts',
+    'jalali_date',
+    'otpmanager',
 ]
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -97,12 +118,12 @@ REST_FRAMEWORK = {
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 
 # Password validation
@@ -129,6 +150,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'fa-ir'
 
+#import locale
+#locale.setlocale(locale.LC_ALL, "Persian_Iran.UTF-8")
+
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
@@ -140,7 +164,9 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/opt/traccar/web/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+#STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 
 # Default primary key field type
@@ -152,9 +178,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MERCHANT = "0a36c5ed-3774-4631-ada6-39b885d738a4"
 
-SANDBOX = True
+SANDBOX = False
 
+<<<<<<< HEAD
 AUTH_USER_MODEL = 'accounts.User'
+=======
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'django_error.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
+>>>>>>> 1c65be9a0e9219cc8b3d280a1f87fb1ee166f76d
 
 
 # local DB
@@ -162,6 +209,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'uzradyab',
+<<<<<<< HEAD
         'USER': 'uzadmin',
         'PASSWORD': 'T_3gBf1YDqQN]1o8',
         'HOST': '127.0.0.1',  # Or your database host
@@ -173,6 +221,19 @@ DATABASES = {
         'USER': 'admin',
         'PASSWORD': '3h4wfv7ue9re',
         'HOST': '192.168.1.101',
+=======
+        'USER': 'postgres',
+        'PASSWORD': '3h4wfv7ue9re',
+        'HOST': '62.60.132.92',  # Or your database host
+        'PORT': '5432',       # Or your database port
+    },
+    'uzradyab': {
+        'ENGINE': 'django.db.backends.postgresql',  # secondary database engine
+        'NAME': 'traccar',
+        'USER': 'postgres',
+        'PASSWORD': '3h4wfv7ue9re',
+        'HOST': '62.60.132.92',
+>>>>>>> 1c65be9a0e9219cc8b3d280a1f87fb1ee166f76d
         'PORT': '5432',
     }
 }
@@ -184,9 +245,18 @@ DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': 'uzradyab',
-#         'USER': 'admin',
-#         'PASSWORD': '93DOoo4*£6uW',
+#         'USER': 'postgres',
+#         'PASSWORD': '3h4wfv7ue9re',
 #         'HOST': '127.0.0.1',  # Or your database host
 #         'PORT': '5432',       # Or your database port
+#     },
+#     'uzradyab': {
+#         'ENGINE': 'django.db.backends.postgresql',  # secondary database engine
+#         'NAME': 'traccar',
+#         'USER': 'postgres',
+#         'PASSWORD': '3h4wfv7ue9re',
+#         'HOST': '127.0.0.1',
+#         'PORT': '5432',
 #     }
 # }
+
