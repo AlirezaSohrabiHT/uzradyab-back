@@ -33,8 +33,11 @@ ALLOWED_HOSTS = ['*']
 CORS_ALLOWED_ORIGINS = [
     "http://uzradyab.ir",
     "http://app.uzradyab.ir",
-        "http://localhost:3000",
+    "http://localhost:3000",
+    "http://localhost:5173",
 ]
+
+TRACCAR_API_URL = "https://app.uzradyab.ir/api"
 
 
 # Application definition
@@ -42,6 +45,8 @@ CORS_ALLOWED_ORIGINS = [
 INSTALLED_APPS = [
     'main',
     'rest_framework',
+    'rest_framework.authtoken',
+    'traccar_calls',
     "corsheaders",
     'django.contrib.admin',
     'django.contrib.auth',
@@ -49,6 +54,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -82,6 +88,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'managerPanel.wsgi.application'
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -143,17 +154,26 @@ MERCHANT = "0a36c5ed-3774-4631-ada6-39b885d738a4"
 
 SANDBOX = True
 
+AUTH_USER_MODEL = 'accounts.User'
 
 
 # local DB
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'uzradyab',
-        'USER': 'alirezaHT',
-        'PASSWORD': 'A9154284393a@',
-        'HOST': '62.106.95.119',  # Or your database host
-        'PORT': '5432',       # Or your database port
+        'USER': 'uzadmin',
+        'PASSWORD': 'T_3gBf1YDqQN]1o8',
+        'HOST': '192.168.1.120',  # Or your database host
+        'PORT': '3306',       # Or your database port
+    },
+    'device_user_db': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'traccar1',
+        'USER': 'admin',
+        'PASSWORD': '3h4wfv7ue9re',
+        'HOST': '192.168.1.101',
+        'PORT': '5432',
     }
 }
 
