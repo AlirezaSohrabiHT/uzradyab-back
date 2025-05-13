@@ -164,7 +164,7 @@ DATABASES = {
         'NAME': 'uzradyab',
         'USER': 'uzadmin',
         'PASSWORD': 'T_3gBf1YDqQN]1o8',
-        'HOST': '192.168.1.120',  # Or your database host
+        'HOST': '127.0.0.1',  # Or your database host
         'PORT': '3306',       # Or your database port
     },
     'device_user_db': {
