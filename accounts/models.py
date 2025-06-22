@@ -24,6 +24,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     raw_password = models.CharField(max_length=128, blank=True)  # <-- new field added
 
+    traccar_token = models.CharField(max_length=512, blank=True, null=True)  # <-- new field added
+
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 

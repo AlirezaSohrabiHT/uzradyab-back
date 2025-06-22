@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-!lz1ztarurm_u8(^k5lol_fp^5_59ap^w03lh!z-k^)3k_(svs'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 
 ALLOWED_HOSTS = ['*']
@@ -40,10 +40,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 TRACCAR_API_URL = "https://app.uzradyab.ir/api"
-    "http://localhost:3000",  # For development on localhost
-    "http://localhost:5173",  # For development on localhost
-    "https://sipaad.exirfirm.com"
-]
+
 
 CSRF_TRUSTED_ORIGINS = [
     'https://app.uzradyab.ir',
@@ -180,28 +177,7 @@ MERCHANT = "0a36c5ed-3774-4631-ada6-39b885d738a4"
 
 SANDBOX = False
 
-<<<<<<< HEAD
 AUTH_USER_MODEL = 'accounts.User'
-=======
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'django_error.log',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['file'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    },
-}
->>>>>>> 1c65be9a0e9219cc8b3d280a1f87fb1ee166f76d
 
 
 # local DB
@@ -209,10 +185,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'uzradyab',
-<<<<<<< HEAD
         'USER': 'uzadmin',
         'PASSWORD': 'T_3gBf1YDqQN]1o8',
-        'HOST': '127.0.0.1',  # Or your database host
+        #'HOST': '127.0.0.1',  # Or your database host
+        'HOST': '192.168.1.120',  # Or your database host
         'PORT': '3306',       # Or your database port
     },
     'device_user_db': {
@@ -221,20 +197,21 @@ DATABASES = {
         'USER': 'admin',
         'PASSWORD': '3h4wfv7ue9re',
         'HOST': '192.168.1.101',
-=======
         'USER': 'postgres',
         'PASSWORD': '3h4wfv7ue9re',
         'HOST': '62.60.132.92',  # Or your database host
         'PORT': '5432',       # Or your database port
     },
     'uzradyab': {
-        'ENGINE': 'django.db.backends.postgresql',  # secondary database engine
-        'NAME': 'traccar',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'traccar1',
+        'USER': 'admin',
+        'PASSWORD': '3h4wfv7ue9re',
+        'HOST': '192.168.1.101',
         'USER': 'postgres',
         'PASSWORD': '3h4wfv7ue9re',
-        'HOST': '62.60.132.92',
->>>>>>> 1c65be9a0e9219cc8b3d280a1f87fb1ee166f76d
-        'PORT': '5432',
+        'HOST': '62.60.132.92',  # Or your database host
+        'PORT': '5432',       # Or your database port
     }
 }
 
