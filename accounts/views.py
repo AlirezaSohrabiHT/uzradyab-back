@@ -25,7 +25,12 @@ class LoginView(APIView):
             return Response({'error': 'Invalid credentials'}, status=401)
 
         token, _ = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key}, status=200)
+
+        return Response({
+            'token': token.key,
+            'is_staff': user.is_staff,
+            'is_superuser': user.is_superuser
+        }, status=200)
 
 
 class GenerateTraccarTokenView(APIView):

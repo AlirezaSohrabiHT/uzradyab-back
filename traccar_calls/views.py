@@ -46,14 +46,16 @@ class FetchDevicesView(APIView):
             if request.query_params.get(key)
         }
 
-        # Handle boolean `all` param
         if "all" in request.query_params:
             params["all"] = request.query_params.get("all")
 
+        headers = {
+            "Authorization": f"Bearer {user.traccar_token}"
+        }
+
         try:
-            # Use HTTP Basic Auth with phone and raw_password
-            response = requests.get(url, params=params, auth=(user.phone, user.raw_password))
-            
+            response = requests.get(url, headers=headers, params=params)
+
             if response.status_code == 200:
                 return Response(response.json(), status=200)
             else:
@@ -64,6 +66,7 @@ class FetchDevicesView(APIView):
                 }, status=response.status_code)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+        
 
 class FetchDriversView(APIView):
     permission_classes = [IsAuthenticated]
@@ -76,15 +79,15 @@ class FetchDriversView(APIView):
         # Collect query parameters
         allowed_params = ["all", "userId", "deviceId", "groupId", "refresh"]
         params = {}
-        
+
         for param in allowed_params:
             if param in request.query_params:
-                # For list parameters like deviceId, we might have multiple values
+                # For list parameters like deviceId, groupId
                 if param in ["deviceId", "groupId"]:
                     values = request.query_params.getlist(param)
                     if values:
                         params[param] = values
-                # For boolean parameters
+                # For boolean parameters like all, refresh
                 elif param in ["all", "refresh"]:
                     value = request.query_params.get(param)
                     if value.lower() in ['true', '1', 'yes']:
@@ -97,14 +100,17 @@ class FetchDriversView(APIView):
                     if value:
                         params[param] = value
 
+        headers = {
+            "Authorization": f"Bearer {user.traccar_token}"
+        }
+
         try:
-            # Use HTTP Basic Auth with phone and raw_password
             response = requests.get(
-                url, 
-                params=params, 
-                auth=(user.phone, user.raw_password)
+                url,
+                params=params,
+                headers=headers
             )
-            
+
             if response.status_code == 200:
                 return Response(response.json(), status=200)
             else:
@@ -113,11 +119,13 @@ class FetchDriversView(APIView):
                     "status_code": response.status_code,
                     "details": response.text,
                 }, status=response.status_code)
+
         except Exception as e:
             return Response({
                 "error": f"An error occurred while fetching drivers: {str(e)}",
                 "status_code": 500
             }, status=500)
+            
 
 class FetchUsersView(APIView):
     permission_classes = [IsAuthenticated]
@@ -127,21 +135,23 @@ class FetchUsersView(APIView):
         base_url = settings.TRACCAR_API_URL
         url = f"{base_url}/users"
 
-        # Get query params
+        # Prepare query params
         params = {}
-        
-        # Handle userId query parameter (only for admin/manager users)
         if 'userId' in request.query_params:
             params['userId'] = request.query_params.get('userId')
 
+        # Prepare authorization header using Bearer token
+        headers = {
+            "Authorization": f"Bearer {user.traccar_token}"
+        }
+
         try:
-            # Use HTTP Basic Auth with phone and raw_password
             response = requests.get(
-                url, 
-                params=params, 
-                auth=(user.phone, user.raw_password)
+                url,
+                params=params,
+                headers=headers
             )
-            
+
             if response.status_code == 200:
                 return Response(response.json(), status=200)
             else:
@@ -150,6 +160,7 @@ class FetchUsersView(APIView):
                     "status_code": response.status_code,
                     "details": response.text,
                 }, status=response.status_code)
+
         except Exception as e:
             return Response({
                 "error": f"An error occurred while fetching users: {str(e)}",
@@ -164,31 +175,31 @@ class FetchStatisticsView(APIView):
         base_url = settings.TRACCAR_API_URL
         url = f"{base_url}/statistics"
 
-        # Get date range from query params or use default (last 7 days)
         try:
+            # Handle date range from query params or fallback to last 7 days
             from_date = request.query_params.get('from')
             if not from_date:
-                # Default to 7 days ago
                 from_date = (datetime.now() - timedelta(days=7)).isoformat() + 'Z'
-            
+
             to_date = request.query_params.get('to')
             if not to_date:
-                # Default to now
                 to_date = datetime.now().isoformat() + 'Z'
-            
-            # Prepare query parameters
+
             params = {
                 'from': from_date,
                 'to': to_date
             }
 
-            # Use HTTP Basic Auth with phone and raw_password
+            headers = {
+                "Authorization": f"Bearer {user.traccar_token}"
+            }
+
             response = requests.get(
-                url, 
-                params=params, 
-                auth=(user.phone, user.raw_password)
+                url,
+                params=params,
+                headers=headers
             )
-            
+
             if response.status_code == 200:
                 return Response(response.json(), status=200)
             else:
@@ -197,6 +208,7 @@ class FetchStatisticsView(APIView):
                     "status_code": response.status_code,
                     "details": response.text,
                 }, status=response.status_code)
+
         except Exception as e:
             return Response({
                 "error": f"An error occurred while fetching statistics: {str(e)}",
