@@ -22,7 +22,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(max_length=15, unique=True)
     credit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     traccar_token = models.CharField(max_length=512, blank=True, null=True)  # <-- new field added
-
+    traccar_id = models.IntegerField(null=True , blank = True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 

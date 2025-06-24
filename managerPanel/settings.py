@@ -197,22 +197,20 @@ DATABASES = {
         'USER': 'admin',
         'PASSWORD': '3h4wfv7ue9re',
         'HOST': '192.168.1.101',
-        'USER': 'postgres',
-        'PASSWORD': '3h4wfv7ue9re',
-        'HOST': '62.60.132.92',  # Or your database host
+        #'HOST': '62.60.132.92',  # Or your database host
         'PORT': '5432',       # Or your database port
     },
-    'uzradyab': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'traccar1',
-        'USER': 'admin',
-        'PASSWORD': '3h4wfv7ue9re',
-        'HOST': '192.168.1.101',
-        'USER': 'postgres',
-        'PASSWORD': '3h4wfv7ue9re',
-        'HOST': '62.60.132.92',  # Or your database host
-        'PORT': '5432',       # Or your database port
-    }
+    # 'uzradyab': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': 'traccar1',
+    #     'USER': 'admin',
+    #     'PASSWORD': '3h4wfv7ue9re',
+    #     'HOST': '192.168.1.101',
+    #     'USER': 'postgres',
+    #     'PASSWORD': '3h4wfv7ue9re',
+    #     #'HOST': '62.60.132.92',  # Or your database host
+    #     'PORT': '5432',       # Or your database port
+    # }
 }
 
 

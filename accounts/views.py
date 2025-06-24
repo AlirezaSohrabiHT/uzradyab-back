@@ -29,56 +29,74 @@ class LoginView(APIView):
         return Response({
             'token': token.key,
             'is_staff': user.is_staff,
-            'is_superuser': user.is_superuser
+            'is_superuser': user.is_superuser,
+            'traccar_id': user.traccar_id
         }, status=200)
 
 
 class GenerateTraccarTokenView(APIView):
-    authentication_classes = [TokenAuthentication]  # Token-based authentication
-    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # The authenticated user is now available as `request.user`
         user = request.user
-        
-        # Extract user input from the request
-        username = user.phone  # Use authenticated user's phone (or email if needed)
+        username = user.phone
         password = request.data.get('password')
-        
+
         if not password:
             return Response({"error": "Password is required."}, status=400)
 
-        # Calculate expiration (1 year from now)
-        expiration = (timezone.now() + timedelta(days=365)).isoformat()  # ISO 8601 format
+        expiration = (timezone.now() + timedelta(days=365)).isoformat()
 
-        # Traccar API URL
-        url = "https://app.uzradyab.ir/api/session/token"
-
-        # Send the POST request to generate the token
-        response = requests.post(
-            url,
-            auth=requests.auth.HTTPBasicAuth(username, password),  # Basic Auth with username and password
-            data={'expiration': expiration}  # Set expiration time
+        # Step 1: Get token
+        token_url = "https://app.uzradyab.ir/api/session/token"
+        token_response = requests.post(
+            token_url,
+            auth=requests.auth.HTTPBasicAuth(username, password),
+            data={'expiration': expiration}
         )
 
-        # Check the response status
-        if response.status_code == 200:
-            try:
-                # The token is directly in the response body (raw response)
-                token = response.text.strip()  # Get the raw token from the response body
-                
-                if token:
-                    # Save the token in the user's model
-                    user.traccar_token = token  # Save the token in the field
-                    user.save()
-                    return Response({"message": "Token successfully saved for the user."}, status=200)
-                else:
-                    return Response({"error": "Token not found in response."}, status=400)
-            except requests.exceptions.JSONDecodeError:
-                return Response({"error": "Response is not valid JSON."}, status=500)
-        else:
-            return Response({"error": f"Error: {response.status_code}, {response.text}"}, status=response.status_code)
+        if token_response.status_code != 200:
+            return Response({
+                "error": f"Error generating token: {token_response.status_code}",
+                "details": token_response.text
+            }, status=token_response.status_code)
 
+        token = token_response.text.strip()
+        if not token:
+            return Response({"error": "Empty token received."}, status=400)
+
+        # Step 2: Get session info by POST to /session (as login)
+        session_url = "https://app.uzradyab.ir/api/session"
+        session_response = requests.post(
+            session_url,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data={"email": username, "password": password}
+        )
+
+        if session_response.status_code != 200:
+            return Response({
+                "error": f"Failed to fetch session info: {session_response.status_code}",
+                "details": session_response.text
+            }, status=session_response.status_code)
+
+        session_data = session_response.json()
+        traccar_id = session_data.get("id")
+
+        if not traccar_id:
+            return Response({"error": "No user ID found in session data."}, status=500)
+
+        # Step 3: Save both to user
+        user.traccar_token = token
+        user.traccar_id = traccar_id
+        user.save()
+
+        return Response({
+            "message": "Token and Traccar ID successfully saved.",
+            "token": token,
+            "traccar_id": traccar_id
+        }, status=200)
+        
 class CheckTraccarTokenView(APIView):
     authentication_classes = [TokenAuthentication]  # Token-based authentication
     permission_classes = [IsAuthenticated]  # Ensure the user is authenticated

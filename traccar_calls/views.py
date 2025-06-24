@@ -8,7 +8,8 @@ import requests
 import logging
 from django.db import connections
 from django.conf import settings
-
+from rest_framework.pagination import PageNumberPagination
+from rest_framework import generics
 logger = logging.getLogger(__name__)
 
 class TraccarSessionView(APIView):
@@ -31,42 +32,78 @@ class TraccarSessionView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-class FetchDevicesView(APIView):
+class DevicePagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+
+class FetchDevicesView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = DevicePagination
 
     def get(self, request):
         user = request.user
         base_url = settings.TRACCAR_API_URL
         url = f"{base_url}/devices"
 
-        # Pass optional filters
-        params = {
-            key: request.query_params.getlist(key)
-            for key in ["id", "uniqueId", "userId"]
-            if request.query_params.get(key)
+        headers = {
+            "Authorization": f"Bearer {user.traccar_token}"
         }
 
-        if "all" in request.query_params:
-            params["all"] = request.query_params.get("all")
+        try:
+            response = requests.get(url, headers=headers)
+
+            if response.status_code != 200:
+                return Response({
+                    "error": "Failed to fetch devices.",
+                    "details": response.text
+                }, status=response.status_code)
+
+            devices = response.json()
+
+            # 🔍 فیلتر محلی بر اساس search query
+            search = request.query_params.get('search')
+            if search:
+                search = search.lower()
+                devices = [
+                    d for d in devices
+                    if search in d.get('name', '').lower() or
+                       search in d.get('uniqueId', '').lower()
+                ]
+
+            # 📄 صفحه‌بندی محلی
+            paginated = self.paginate_queryset(devices)
+            return self.get_paginated_response(paginated)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+        
+class UpdateDeviceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, device_id):
+        user = request.user
+        base_url = settings.TRACCAR_API_URL
+        url = f"{base_url}/devices/{device_id}"
 
         headers = {
             "Authorization": f"Bearer {user.traccar_token}"
         }
 
         try:
-            response = requests.get(url, headers=headers, params=params)
+            data = request.data
+            response = requests.put(url, json=data, headers=headers)
 
             if response.status_code == 200:
                 return Response(response.json(), status=200)
             else:
                 return Response({
-                    "error": "Failed to fetch devices from Traccar.",
+                    "error": "Failed to update device.",
                     "status_code": response.status_code,
-                    "details": response.text,
+                    "details": response.text
                 }, status=response.status_code)
+
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
-        
+            return Response({"error": str(e)}, status=500)        
 
 class FetchDriversView(APIView):
     permission_classes = [IsAuthenticated]
@@ -127,6 +164,50 @@ class FetchDriversView(APIView):
             }, status=500)
             
 
+# class FetchUsersView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         user = request.user
+#         base_url = settings.TRACCAR_API_URL
+#         url = f"{base_url}/users"
+
+#         # Prepare query params
+#         params = {}
+#         if 'userId' in request.query_params:
+#             params['userId'] = request.query_params.get('userId')
+
+#         # Prepare authorization header using Bearer token
+#         headers = {
+#             "Authorization": f"Bearer {user.traccar_token}"
+#         }
+
+#         try:
+#             response = requests.get(
+#                 url,
+#                 params=params,
+#                 headers=headers
+#             )
+
+#             if response.status_code == 200:
+#                 return Response(response.json(), status=200)
+#             else:
+#                 return Response({
+#                     "error": "Failed to fetch users from Traccar.",
+#                     "status_code": response.status_code,
+#                     "details": response.text,
+#                 }, status=response.status_code)
+
+#         except Exception as e:
+#             return Response({
+#                 "error": f"An error occurred while fetching users: {str(e)}",
+#                 "status_code": 500
+#             }, status=500)
+            
+class UserPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+
 class FetchUsersView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -135,37 +216,73 @@ class FetchUsersView(APIView):
         base_url = settings.TRACCAR_API_URL
         url = f"{base_url}/users"
 
-        # Prepare query params
-        params = {}
-        if 'userId' in request.query_params:
-            params['userId'] = request.query_params.get('userId')
-
-        # Prepare authorization header using Bearer token
         headers = {
             "Authorization": f"Bearer {user.traccar_token}"
         }
 
         try:
-            response = requests.get(
-                url,
-                params=params,
-                headers=headers
-            )
+            response = requests.get(url, headers=headers)
+            if response.status_code != 200:
+                return Response({
+                    "error": "Failed to fetch users.",
+                    "details": response.text
+                }, status=response.status_code)
+
+            users = response.json()
+
+            # 🔍 فیلتر کردن بر اساس search (نام، ایمیل یا شماره)
+            search = request.query_params.get('search', '').lower()
+            if search:
+                users = [
+                    u for u in users
+                    if search in (u.get('name') or '').lower()
+                    or search in (u.get('email') or '').lower()
+                    or search in (u.get('phone') or '').lower()
+                ]
+
+            # فیلتر دیگر مانند administrator
+            admin_filter = request.query_params.get('administrator')
+            if admin_filter in ['true', 'false']:
+                is_admin = admin_filter == 'true'
+                users = [u for u in users if u.get('administrator') == is_admin]
+
+            # صفحه‌بندی محلی
+            paginator = UserPagination()
+            result_page = paginator.paginate_queryset(users, request)
+            return paginator.get_paginated_response(result_page)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+ 
+class UpdateTraccarUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, user_id):
+        base_url = settings.TRACCAR_API_URL
+        url = f"{base_url}/users/{user_id}"
+
+        headers = {
+            "Authorization": f"Bearer {request.user.traccar_token}"
+        }
+
+        data = request.data  # فرض می‌کنیم فرم کلاینت همه فیلدهای لازم را ارسال می‌کند
+
+        try:
+            response = requests.put(url, json=data, headers=headers)
 
             if response.status_code == 200:
-                return Response(response.json(), status=200)
+                return Response(response.json(), status=status.HTTP_200_OK)
             else:
                 return Response({
-                    "error": "Failed to fetch users from Traccar.",
+                    "error": "Failed to update user.",
                     "status_code": response.status_code,
-                    "details": response.text,
+                    "details": response.text
                 }, status=response.status_code)
 
         except Exception as e:
             return Response({
-                "error": f"An error occurred while fetching users: {str(e)}",
-                "status_code": 500
-            }, status=500)
+                "error": f"An error occurred while updating user: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
 class FetchStatisticsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -215,6 +332,54 @@ class FetchStatisticsView(APIView):
                 "status_code": 500
             }, status=500)
 
+class CreateTraccarUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        url = f"{settings.TRACCAR_API_URL}/users"
+        headers = {
+            "Authorization": f"Bearer {request.user.traccar_token}"
+        }
+
+        try:
+            response = requests.post(url, json=request.data, headers=headers)
+            if response.status_code == 200:
+                return Response(response.json(), status=200)
+            return Response({
+                "error": "Failed to create user",
+                "details": response.text
+            }, status=response.status_code)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+        
+class CreateTraccarDeviceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        url = f"{settings.TRACCAR_API_URL}/devices"
+        headers = {
+            "Authorization": f"Bearer {request.user.traccar_token}"
+        }
+
+        try:
+            response = requests.post(url, json=request.data, headers=headers)
+            if response.status_code == 200:
+                device_data = response.json()
+                return Response({
+                    "message": "Device created successfully.",
+                    "device_id": device_data.get("id"),
+                    "device": device_data  # optionally include full device info
+                }, status=200)
+
+            return Response({
+                "error": "Failed to create device",
+                "details": response.text
+            }, status=response.status_code)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+              
 class DeviceUsersView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -271,19 +436,18 @@ class DeviceUsersView(APIView):
         return user_ids
     
     def _get_user_details(self, user_id):
-        """Fetch user details from Traccar API for a specific user ID."""
-        user = self.request.user
+        """Fetch user details from Traccar API for a specific user ID using Bearer token."""
         base_url = settings.TRACCAR_API_URL
-        
+        token = self.request.user.traccar_token  # <- استفاده از توکن
+
         try:
-            # Fetch user details from Traccar API
             url = f"{base_url}/users/{user_id}"
-            
-            response = requests.get(
-                url,
-                auth=(user.phone, user.raw_password)
-            )
-            
+            headers = {
+                "Authorization": f"Bearer {token}"
+            }
+
+            response = requests.get(url, headers=headers)
+
             if response.status_code == 200:
                 return response.json()
             else:
@@ -292,3 +456,37 @@ class DeviceUsersView(APIView):
         except Exception as e:
             logger.error(f"Error fetching user {user_id}: {str(e)}")
             return None
+
+class LinkUserToDeviceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user_id = request.data.get('userId')
+        device_id = request.data.get('deviceId')
+
+        if not user_id or not device_id:
+            return Response({"error": "Both userId and deviceId are required."}, status=400)
+
+        token = request.user.traccar_token
+        url = f"{settings.TRACCAR_API_URL}/permissions"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "userId": user_id,
+            "deviceId": device_id
+        }
+
+        try:
+            response = requests.post(url, json=data, headers=headers)
+
+            if response.status_code == 200:
+                return Response({"success": "User linked to device successfully"}, status=200)
+            else:
+                logger.warning(f"Failed to link: {response.status_code} - {response.text}")
+                return Response({"error": "Failed to link user and device", "details": response.text}, status=response.status_code)
+
+        except Exception as e:
+            logger.error(f"Error linking user to device: {str(e)}")
+            return Response({"error": str(e)}, status=500)

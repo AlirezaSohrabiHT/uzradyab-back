@@ -8,7 +8,7 @@ class UserAdmin(BaseUserAdmin):
     add_form = UserCreationForm
     form = UserChangeForm
 
-    list_display = ('phone', 'credit', 'is_staff', 'is_active')
+    list_display = ('phone', 'credit', 'traccar_id', 'is_staff', 'is_active')  # ✅ traccar_id added
     search_fields = ('phone',)
     ordering = ('phone',)
 
@@ -16,6 +16,7 @@ class UserAdmin(BaseUserAdmin):
         (None, {'fields': ('phone', 'password')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Credit Info', {'fields': ('credit',)}),
+        ('Traccar Info', {'fields': ('traccar_token', 'traccar_id')}),  # ✅ new section
         ('Change Password', {'fields': ('password1', 'password2')}),
     )
 
