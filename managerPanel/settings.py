@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'accounts',
     'jalali_date',
     'otpmanager',
+    'services',
 ]
 
 MIDDLEWARE = [

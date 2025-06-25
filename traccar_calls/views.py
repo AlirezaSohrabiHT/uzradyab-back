@@ -352,7 +352,97 @@ class CreateTraccarUserView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
-        
+ 
+
+class CreateDeviceAndUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        base_url = settings.TRACCAR_API_URL
+        auth_header = {
+            "Authorization": f"Bearer {user.traccar_token}"
+        }
+
+        data = request.data
+        device_data = data.get("device")
+        user_data = data.get("user")
+
+        if not device_data or not user_data:
+            return Response({"error": "Both 'device' and 'user' data are required."}, status=400)
+
+        unique_id = device_data.get("uniqueId")
+
+        try:
+            # Step 1: Check if device exists
+            check_device_url = f"{base_url}/devices"
+            params = {"uniqueId": unique_id}
+            response = requests.get(check_device_url, headers=auth_header, params=params)
+
+            if response.status_code != 200:
+                return Response({
+                    "error": "Failed to check device existence.",
+                    "details": response.text
+                }, status=response.status_code)
+
+            existing_devices = response.json()
+            if existing_devices:
+                return Response({
+                    "error": f"Device with uniqueId '{unique_id}' already exists."
+                }, status=409)
+
+            # Step 2: Create user
+            create_user_url = f"{base_url}/users"
+            response = requests.post(create_user_url, headers=auth_header, json=user_data)
+
+            if response.status_code != 200:
+                return Response({
+                    "error": "Failed to create user.",
+                    "details": response.text
+                }, status=response.status_code)
+
+            created_user = response.json()
+            created_user_id = created_user.get("id")
+
+            # Step 3: Create device
+            create_device_url = f"{base_url}/devices"
+            response = requests.post(create_device_url, headers=auth_header, json=device_data)
+
+            if response.status_code != 200:
+                return Response({
+                    "error": "Failed to create device.",
+                    "details": response.text
+                }, status=response.status_code)
+
+            created_device = response.json()
+            created_device_id = created_device.get("id")
+
+            # Step 4: Link user and device
+            permission_url = f"{base_url}/permissions"
+            link_payload = {
+                "userId": created_user_id,
+                "deviceId": created_device_id
+            }
+
+            response = requests.post(permission_url, headers=auth_header, json=link_payload)
+
+            if response.status_code != 200:
+                return Response({
+                    "error": "Failed to link user to device.",
+                    "details": response.text
+                }, status=response.status_code)
+
+            # ✅ Success
+            return Response({
+                "message": "User, device created and linked successfully.",
+                "user": created_user,
+                "device": created_device
+            }, status=201)
+
+        except Exception as e:
+            logger.error(f"CreateDeviceAndUserView error: {str(e)}")
+            return Response({"error": str(e)}, status=500)
+                
 class CreateTraccarDeviceView(APIView):
     permission_classes = [IsAuthenticated]
 
