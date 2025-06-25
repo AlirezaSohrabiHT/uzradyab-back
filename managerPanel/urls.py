@@ -29,6 +29,7 @@ urlpatterns = [
     path('verify/', VerifyAPIView.as_view(), name='verify'),
     path('api/traccar/', include('traccar_calls.urls')),
     path('api/services/', include('services.urls')),
+    path('api/main/', include('main.urls')),
     path('api/accounts/', include('accounts.urls')),
     path('deviceExpired/', ExpiredDevicesView.as_view(), name='device_expired'),
     path("otp/", include("otpmanager.urls")),  # Change "otp_app" to your actual app name

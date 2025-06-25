@@ -8,9 +8,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import AccountCharge , Payment , UserSettings
-from .serializers import AccountChargeSerializer , UserSettingsSerializer
+from .serializers import PaymentSerializer , AccountChargeSerializer , UserSettingsSerializer
 import time
 from decimal import Decimal
+from rest_framework import generics
+from rest_framework.pagination import PageNumberPagination
 
 #? sandbox merchant 
 if settings.SANDBOX:
@@ -309,5 +311,12 @@ class VerifyAPIView(APIView):
             return Response({'status': False, 'code': 'connection error'})
 
 
+class PaymentPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
-
+class PaymentListView(generics.ListAPIView):
+    queryset = Payment.objects.all().select_related('account_charge').order_by('-timestamp')
+    serializer_class = PaymentSerializer
+    pagination_class = PaymentPagination
