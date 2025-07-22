@@ -20,6 +20,7 @@ from main.views import PayAPIView,  VerifyAPIView , AccountChargeAPIView , SendR
 from django.urls import path , include
 from main.views import PayAPIView, VerifyAPIView, AccountChargeAPIView, SendRequestAPIView
 from uzradyabHandler.views import ExpiredDevicesView 
+from health.views import health_check
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,5 +34,6 @@ urlpatterns = [
     path('api/accounts/', include('accounts.urls')),
     path('deviceExpired/', ExpiredDevicesView.as_view(), name='device_expired'),
     path("otp/", include("otpmanager.urls")),  # Change "otp_app" to your actual app name
+    path('health/', health_check, name='health_check'),
 
 ]

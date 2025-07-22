@@ -37,7 +37,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://app.uzradyab.ir",
     "http://localhost:3000",
     "http://localhost:5173",
-    'https://admin.uzradyab.ir'
+    'https://admin.uzradyab.ir',
+    'http://192.168.1.120'
 ]
 
 TRACCAR_API_URL = "https://app.uzradyab.ir/api"

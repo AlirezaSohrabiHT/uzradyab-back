@@ -2,22 +2,18 @@ version: '3.8'
 
 services:
   web:
-    # This service builds your Django application using the Dockerfile in the current directory
     build: .
-    # The command to run your Django ASGI application with Uvicorn.
-    # This matches the CMD instruction in your Dockerfile.
     command: uvicorn managerPanel.asgi:application --host 0.0.0.0 --port 36201
     volumes:
-      # Mount the current directory into the container's /app directory.
-      # This is useful for development as code changes on your host machine
-      # will be reflected inside the container without rebuilding the image.
       - .:/app
     ports:
-      # Map port 8756 on your host to port 8756 in the container
       - "36201:36201"
     environment:
-      # If your Django application needs any environment variables
-      # (e.g., for database connection if it's external, or other settings),
-      # you can define them here.
-      # For example, if you still need VITE_NOTIFICATION_URL in the backend context:
-      VITE_NOTIFICATION_URL: http://127.0.0.1:36201 # Adjust if your frontend is in another container
+      VITE_NOTIFICATION_URL: http://127.0.0.1:36201 
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:36201/health/"]
+      interval: 30s      
+      timeout: 10s       
+      retries: 3         
+      start_period: 40s  
