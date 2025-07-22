@@ -26,7 +26,7 @@ class ExpiredDevicesView(APIView):
         search_term = request.query_params.get('search', '').strip()
 
         # Use 'uzradyab' connection for read-only access, ordered by expirationtime (newest first)
-        with connections['uzradyab'].cursor() as cursor:
+        with connections['device_user_db'].cursor() as cursor:
             query = """
                 SELECT 
                     d.id, d.name, d.uniqueid, d.phone, d.expirationtime,
