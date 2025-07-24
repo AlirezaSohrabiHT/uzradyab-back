@@ -580,3 +580,145 @@ class LinkUserToDeviceView(APIView):
         except Exception as e:
             logger.error(f"Error linking user to device: {str(e)}")
             return Response({"error": str(e)}, status=500)
+        
+class ChangeUserPasswordView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        Change user password by phone number.
+        
+        Expected payload:
+        {
+            "phone": "user_phone_number",
+            "password": "new_password"
+        }
+        """
+        phone = request.data.get('phone')
+        new_password = request.data.get('password')
+
+        if not phone or not new_password:
+            return Response({
+                "error": "Both 'phone' and 'password' are required."
+            }, status=400)
+
+        base_url = settings.TRACCAR_API_URL
+        
+        # Basic Auth credentials (static)
+        auth = (settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD)
+
+        try:
+            # Step 1: Fetch all users to find the one with matching email (phone)
+            users_url = f"{base_url}/users"
+            response = requests.get(users_url, auth=auth)
+
+            if response.status_code != 200:
+                return Response({
+                    "error": "Failed to fetch users from Traccar.",
+                    "status_code": response.status_code,
+                    "details": response.text
+                }, status=response.status_code)
+
+            users = response.json()
+
+            # Step 2: Find user where email matches phone
+            target_user = None
+            for user in users:
+                if user.get('email') == phone:
+                    target_user = user
+                    break
+
+            if not target_user:
+                return Response({
+                    "error": f"No user found with email matching phone number: {phone}"
+                }, status=404)
+
+            user_id = target_user.get('id')
+
+            # Step 3: Update the user's password
+            update_url = f"{base_url}/users/{user_id}"
+            
+            # Prepare the user data with updated password
+            # Keep all existing user data and only update the password
+            user_data = target_user.copy()
+            user_data['password'] = new_password
+
+            response = requests.put(update_url, json=user_data, auth=auth)
+
+            if response.status_code == 200:
+                # Don't return the password in the response for security
+                updated_user = response.json()
+                if 'password' in updated_user:
+                    del updated_user['password']
+                
+                return Response({
+                    "message": "Password updated successfully.",
+                    "user": updated_user
+                }, status=200)
+            else:
+                return Response({
+                    "error": "Failed to update user password.",
+                    "status_code": response.status_code,
+                    "details": response.text
+                }, status=response.status_code)
+
+        except Exception as e:
+            logger.error(f"ChangeUserPasswordView error: {str(e)}")
+            return Response({
+                "error": f"An error occurred while changing password: {str(e)}"
+            }, status=500)
+            
+class CheckUserExistsView(APIView):
+    def get(self, request):
+        """
+        Check if a user exists with the given phone number.
+        Uses the same approach as ChangeUserPasswordView that works perfectly.
+        
+        Query parameter: phone
+        Returns: {"exists": true/false}
+        """
+        phone = request.query_params.get('phone')
+        
+        if not phone:
+            return Response({"error": "Phone parameter is required"}, status=400)
+
+        base_url = settings.TRACCAR_API_URL
+        
+        # Basic Auth credentials (static) - same as ChangeUserPasswordView
+        auth = (settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD)
+
+        try:
+            # Step 1: Fetch all users to find the one with matching email (phone)
+            # Same approach as ChangeUserPasswordView
+            users_url = f"{base_url}/users"
+            response = requests.get(users_url, auth=auth)
+
+            if response.status_code != 200:
+                logger.error(f"Failed to fetch users from Traccar: {response.status_code} - {response.text}")
+                # Return false by default so the flow can continue
+                return Response({
+                    "exists": False,
+                    "error": "Unable to verify user existence at this time."
+                }, status=200)
+
+            users = response.json()
+
+            # Step 2: Find user where email matches phone (same logic as ChangeUserPasswordView)
+            target_user = None
+            for user in users:
+                if user.get('email') == phone:
+                    target_user = user
+                    break
+
+            # Return whether user exists
+            user_exists = target_user is not None
+            
+            return Response({"exists": user_exists}, status=200)
+
+        except Exception as e:
+            logger.error(f"CheckUserExistsView error: {str(e)}")
+            # Return false by default so the flow can continue
+            return Response({
+                "exists": False,
+                "error": "Unable to verify user existence."
+            }, status=200)
