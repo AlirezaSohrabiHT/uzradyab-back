@@ -183,8 +183,8 @@ SANDBOX = False
 AUTH_USER_MODEL = 'accounts.User'
 
 
-TRACCAR_API_USERNAME = "09154284393"
-TRACCAR_API_PASSWORD = "123123"
+TRACCAR_API_USERNAME = "09156336261"
+TRACCAR_API_PASSWORD = "MTkKppOTdOsj"
 
 
 # local DB
@@ -195,20 +195,21 @@ DATABASES = {
         'USER': 'uzadmin',
         'PASSWORD': 'T_3gBf1YDqQN]1o8',
         #'HOST': '127.0.0.1',  # Or your database host
-        'HOST': '94.183.133.8',  # Or your database host
-        #'PORT': '3306',       # Or your database port
-        'PORT': '8506',       # Or your database port
+        'HOST': '192.168.1.120',  # Or your database host
+        #'HOST': '94.183.133.8',  # Or your database host
+        'PORT': '3306',       # Or your database port
+        #'PORT': '8506',       # Or your database port
     },
     'device_user_db': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'traccar1',
         'USER': 'admin',
         'PASSWORD': '3h4wfv7ue9re',
-        # 'HOST': '192.168.1.101',
-        'HOST': '94.183.133.8',  # Or your database host
+         'HOST': '192.168.1.101',
+        #'HOST': '94.183.133.8',  # Or your database host
         #'HOST': '62.60.132.92',  # Or your database host
-        # 'PORT': '5432',       # Or your database port
-        'PORT': '8506',       # Or your database port
+        'PORT': '5432',       # Or your database port
+        #'PORT': '8506',       # Or your database port
 
     },
     # 'uzradyab': {
