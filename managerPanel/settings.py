@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     'jalali_date',
     'otpmanager',
     'services',
+    'uzradyabHandler',
 ]
 
 MIDDLEWARE = [
@@ -206,7 +207,7 @@ DATABASES = {
         'NAME': 'traccar1',
         'USER': 'admin',
         'PASSWORD': '3h4wfv7ue9re',
-         'HOST': '192.168.1.101',
+        'HOST': '192.168.1.101',
         #'HOST': '94.183.133.8',  # Or your database host
         #'HOST': '62.60.132.92',  # Or your database host
         'PORT': '5432',       # Or your database port

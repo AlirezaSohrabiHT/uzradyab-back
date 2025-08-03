@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CheckUserExistsView , ChangeUserPasswordView , LinkUserToDeviceView , CreateTraccarDeviceView , CreateTraccarUserView , UpdateTraccarUserView , UpdateDeviceView , TraccarSessionView ,DeviceUsersView , FetchStatisticsView, FetchDriversView, FetchDevicesView , FetchUsersView
+from .views import CheckUserExistsView , FetchPositionsTimeRangeView , ChangeUserPasswordView , LinkUserToDeviceView , CreateTraccarDeviceView , CreateTraccarUserView , UpdateTraccarUserView , UpdateDeviceView , TraccarSessionView ,DeviceUsersView , FetchStatisticsView, FetchDriversView, FetchDevicesView , FetchUsersView
 
 urlpatterns = [
     path('session/', TraccarSessionView.as_view(), name='traccar-session'),
@@ -15,4 +15,5 @@ urlpatterns = [
     path('link-user-device/', LinkUserToDeviceView.as_view(), name='traccar-device-create'),
     path('change-password/', ChangeUserPasswordView.as_view(), name='change-password'),
     path('check-user-exists/', CheckUserExistsView.as_view(), name='change-user-exist'),
+    path('positions/time-range/', FetchPositionsTimeRangeView.as_view(), name='positions-time-range'),
 ]

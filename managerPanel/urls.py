@@ -33,6 +33,7 @@ urlpatterns = [
     path('api/main/', include('main.urls')),
     path('api/accounts/', include('accounts.urls')),
     path('deviceExpired/', ExpiredDevicesView.as_view(), name='device_expired'),
+    path('deviceExpired/<int:pk>/', ExpiredDevicesView.as_view(), name='expired-device-detail'),
     path("otp/", include("otpmanager.urls")),  # Change "otp_app" to your actual app name
     path('health/', health_check, name='health_check'),
 

@@ -722,3 +722,64 @@ class CheckUserExistsView(APIView):
                 "exists": False,
                 "error": "Unable to verify user existence."
             }, status=200)
+            
+
+class FetchPositionsTimeRangeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Get the time range of the last 200 positions for a device.
+        
+        Query parameters:
+        - deviceId (required): The device ID
+        
+        Returns:
+        - from: datetime of the oldest position in the last 200
+        - to: datetime of the newest position in the last 200
+        - count: actual number of positions found
+        """
+        device_id = request.query_params.get('deviceId')
+        
+        if not device_id:
+            return Response({"error": "Device ID is required"}, status=400)
+        
+        try:
+            time_range = self._get_positions_time_range(device_id)
+            return Response(time_range, status=200)
+            
+        except Exception as e:
+            logger.error(f"Error in FetchPositionsTimeRangeView: {str(e)}")
+            return Response({"error": f"An error occurred: {str(e)}"}, status=500)
+    
+    def _get_positions_time_range(self, device_id):
+        """Get the time range of the last 200 positions for a device."""
+        
+        with connections['device_user_db'].cursor() as cursor:
+            # Get the last 200 positions' time range
+            query = """
+                SELECT MIN(fixtime) as min_time, MAX(fixtime) as max_time, COUNT(*) as total_count
+                FROM (
+                    SELECT fixtime 
+                    FROM tc_positions 
+                    WHERE deviceid = %s 
+                    ORDER BY fixtime DESC 
+                    LIMIT 200
+                ) as last_positions
+            """
+            
+            cursor.execute(query, [device_id])
+            result = cursor.fetchone()
+            
+            if result and result[0] and result[1]:
+                return {
+                    'from': result[0].isoformat(),
+                    'to': result[1].isoformat(),
+                    'count': result[2]
+                }
+            else:
+                return {
+                    'from': None,
+                    'to': None,
+                    'count': 0
+                }
