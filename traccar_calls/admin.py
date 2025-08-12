@@ -1,4 +1,6 @@
-# admin.py - Update your admin configuration
+# admin.py
+from django.contrib import admin
+from .models import ExpiredUser
 
 @admin.register(ExpiredUser)
 class ExpiredUserAdmin(admin.ModelAdmin):
