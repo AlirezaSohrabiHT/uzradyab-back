@@ -29,8 +29,8 @@ else:
 amount = 1000  # Rial / Required
 description = "توضیحات مربوط به تراکنش را در این قسمت وارد کنید"  # Required
 phone = 'YOUR_PHONE_NUMBER'  # Optional
-# CallbackURL = 'https://app.uzradyab.ir/settings/device/'  # Important: need to edit for real server.
-CallbackURL = 'http://127.0.0.1:3000/settings/device/'  # Important: need to edit for real server.
+CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
+# CallbackURL = 'http://localhost:3000/payment-verify/'  # Important: need to edit for real server.
 
 class AccountChargeAPIView(APIView):
     def get(self, request):
