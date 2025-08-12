@@ -182,7 +182,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MERCHANT = "0a36c5ed-3774-4631-ada6-39b885d738a4"
 
-SANDBOX = False
+SANDBOX = True
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -199,9 +199,10 @@ DATABASES = {
         'USER': 'uzadmin',
         'PASSWORD': 'T_3gBf1YDqQN]1o8',
         #'HOST': '127.0.0.1',  # Or your database host
-        #'HOST': '192.168.1.120',  # Or your database host
-        'HOST': '94.183.133.8',  # Or your database host
-        #'PORT': '3306',       # Or your database port
+        # 'HOST': '192.168.1.120',  # Or your database host
+        'HOST': '94.183.133.8',
+        #'HOST': '94.183.133.8',  # Or your database host
+        # 'PORT': '3306',       # Or your database port
         'PORT': '8506',       # Or your database port
     },
     'device_user_db': {
@@ -209,11 +210,11 @@ DATABASES = {
         'NAME': 'traccar1',
         'USER': 'admin',
         'PASSWORD': '3h4wfv7ue9re',
-        'HOST': '192.168.1.101',
-        #'HOST': '94.183.133.8',  # Or your database host
+        # 'HOST': '192.168.1.101',
+        'HOST': '94.183.133.8',  # Or your database host
         #'HOST': '62.60.132.92',  # Or your database host
-        'PORT': '5432',       # Or your database port
-        #'PORT': '8506',       # Or your database port
+        # 'PORT': '5432',       # Or your database port
+        'PORT': '8506',       # Or your database port
 
     },
     # 'uzradyab': {
