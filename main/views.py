@@ -22,7 +22,7 @@ if settings.SANDBOX:
 else:
     ZP_API_REQUEST = f"https://api.zarinpal.com/pg/v4/payment/request.json"
     ZP_API_VERIFY = f"https://api.zarinpal.com/pg/v4/payment/verify.json"
-    ZP_API_STARTPAY = f"https://www.pal.com/pg/StartPay/"
+    ZP_API_STARTPAY = f"https://www.zarinpal.com/pg/StartPay/"
 
 
 
