@@ -22,15 +22,15 @@ if settings.SANDBOX:
 else:
     ZP_API_REQUEST = f"https://api.zarinpal.com/pg/v4/payment/request.json"
     ZP_API_VERIFY = f"https://api.zarinpal.com/pg/v4/payment/verify.json"
-    ZP_API_STARTPAY = f"https://www.pal.com/pg/StartPay/"
+    ZP_API_STARTPAY = f"https://www.zarinpal.com/pg/StartPay/"
 
 
 
 amount = 1000  # Rial / Required
 description = "توضیحات مربوط به تراکنش را در این قسمت وارد کنید"  # Required
 phone = 'YOUR_PHONE_NUMBER'  # Optional
-# CallbackURL = 'https://app.uzradyab.ir/settings/device/'  # Important: need to edit for real server.
-CallbackURL = 'http://127.0.0.1:3000/settings/device/'  # Important: need to edit for real server.
+CallbackURL = 'https://app.uzradyab.ir/settings/device/'  # Important: need to edit for real server.
+# CallbackURL = 'http://127.0.0.1:3000/settings/device/'  # Important: need to edit for real server.
 
 class AccountChargeAPIView(APIView):
     def get(self, request):

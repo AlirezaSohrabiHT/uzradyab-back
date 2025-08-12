@@ -1,6 +1,8 @@
-# managerPanel/celery.py
+# managerPanel/celery.py - Update your existing celery.py
+
 import os
 from celery import Celery
+from celery.schedules import crontab
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'managerPanel.settings')
 
@@ -8,16 +10,21 @@ app = Celery('managerPanel')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 
-# managerPanel/__init__.py
-from .celery import app as celery_app
-__all__ = ('celery_app',)
+# Periodic tasks configuration
+app.conf.beat_schedule = {
+    'check-expired-users-midnight': {
+        'task': 'traccar_calls.tasks.check_expired_users',  # Replace 'your_app' with actual app name
+        'schedule': crontab(hour=0, minute=20),  # Every day at midnight
+    },
+    'send-expiry-sms-notifications': {
+        'task': 'traccar_calls.tasks.send_expiry_sms_notifications',
+        'schedule': crontab(hour=9, minute=0),  # Every day at 9 AM
+    },
+    'cleanup-old-expired-users-weekly': {
+        'task': 'traccar_calls.tasks.cleanup_old_expired_users',  # Replace 'your_app' with actual app name
+        'schedule': crontab(hour=2, minute=0, day_of_week=0),  # Every Sunday at 2 AM
+        'kwargs': {'days': 30},  # Keep records for 30 days
+    },
+}
 
-# Add to managerPanel/settings.py
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
-
+app.conf.timezone = 'Asia/Tehran'
