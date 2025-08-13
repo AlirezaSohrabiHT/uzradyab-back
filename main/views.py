@@ -12,6 +12,7 @@ import time
 from decimal import Decimal
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
+from .utils import update_expiration
 
 #? sandbox merchant 
 if settings.SANDBOX:
@@ -162,6 +163,7 @@ def Verify(authority):
                     payment.save()
 
                     # Call utils
+                    update_expiration(payment.device_id_number, payment.period)
 
                     return JsonResponse({'status': True, 'RefID': response_data['RefID'], 'period': period})
                 except Payment.DoesNotExist:
