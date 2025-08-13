@@ -1,5 +1,4 @@
 
-
 from django.conf import settings
 import requests
 import json
@@ -29,8 +28,8 @@ else:
 amount = 1000  # Rial / Required
 description = "توضیحات مربوط به تراکنش را در این قسمت وارد کنید"  # Required
 phone = 'YOUR_PHONE_NUMBER'  # Optional
-CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
-# CallbackURL = 'http://localhost:3000/payment-verify/'  # Important: need to edit for real server.
+# CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
+CallbackURL = 'http://localhost:3000/payment-verify/'  # Important: need to edit for real server.
 
 class AccountChargeAPIView(APIView):
     def get(self, request):
@@ -48,25 +47,27 @@ class PayAPIView(APIView):
         uniqueId = data.get('uniqueId')
         phone = data.get('phone')
         name = data.get('name')
-        id_number = data.get('id')
+        device_id_number = data.get('id')
+        accountcharges_id = data.get('accountcharges_id')
         
-        callback_url = f"{CallbackURL}{id_number}"
+        callback_url = f"{CallbackURL}{device_id_number}"
         
         try:
             # Find account charge settings
             settings = AccountCharge.objects.filter(amount=amount, period=period).latest('timestamp')
             amount = int(settings.amount)
+            accountCharge = AccountCharge.objects.get(amount=amount, period=period)
             
             # Create a new Payment entry with status "Pending"
             payment = Payment.objects.create(
                 unique_id=uniqueId,
                 name=name,
-                id_number=id_number,
+                device_id_number=device_id_number,
                 phone=phone,
                 period=period,
                 amount=amount,
                 status="معلق",
-                account_charge=settings,
+                account_charge=accountCharge,
             )
 
             # Prepare data for Zarinpal payment request
@@ -159,6 +160,9 @@ def Verify(authority):
                     payment.status = "موفق"
                     payment.verification_code = response_data['RefID']
                     payment.save()
+
+                    # Call utils
+
                     return JsonResponse({'status': True, 'RefID': response_data['RefID'], 'period': period})
                 except Payment.DoesNotExist:
                     print("Payment not found for authority:", authority)
