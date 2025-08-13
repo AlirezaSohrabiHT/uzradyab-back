@@ -5,11 +5,11 @@ from .models import Payment, AccountCharge
 
 class PaymentAdmin(ModelAdminJalaliMixin, admin.ModelAdmin):
     list_display = (
-        'unique_id', 'account_charge', 'name', 'status', 'id_number', 'phone', 
+        'account_charge','unique_id', 'name', 'status', 'device_id_number', 'phone', 
         'period', 'amount', 'payment_code', 'verification_code', 'get_jalali_timestamp'
     )
     list_filter = ('status', 'timestamp')
-    search_fields = ('unique_id', 'name', 'id_number')
+    search_fields = ('unique_id', 'name', 'device_id_number')
 
     def get_jalali_timestamp(self, obj):
         return datetime2jalali(obj.timestamp).strftime('%Y/%m/%d %H:%M')

@@ -4,7 +4,7 @@ from .models import AccountCharge , UserSettings , Payment
 class AccountChargeSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccountCharge
-        fields = ('amount', 'duration_days', 'period')
+        fields = ('id', 'amount', 'duration_days', 'period')
 
 class UserSettingsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,7 +17,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = [
-            'id', 'unique_id', 'name', 'id_number', 'phone', 
+            'id', 'unique_id', 'name', 'device_id_number', 'phone', 
             'period', 'amount', 'payment_code', 'verification_code', 
             'status', 'timestamp', 'account_charge'
         ]
