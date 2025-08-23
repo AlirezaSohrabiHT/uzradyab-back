@@ -37,6 +37,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://app.uzradyab.ir",
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://localhost:3037",
     'https://admin.uzradyab.ir',
     'http://192.168.1.120',
     'https://sipaad.exirfirm.com'
