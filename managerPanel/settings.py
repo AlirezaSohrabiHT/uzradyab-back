@@ -37,6 +37,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://app.uzradyab.ir",
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://localhost:3037",
     'https://admin.uzradyab.ir',
     'http://192.168.1.120',
     'https://sipaad.exirfirm.com'
@@ -210,11 +211,11 @@ DATABASES = {
         'NAME': 'traccar1',
         'USER': 'admin',
         'PASSWORD': '3h4wfv7ue9re',
-        #  'HOST': '192.168.1.101',
-        'HOST': '94.183.133.8',  # Or your database host
+         'HOST': '192.168.1.101',
+        # 'HOST': '94.183.133.8',  # Or your database host
         #'HOST': '62.60.132.92',  # Or your database host
-        #  'PORT': '5432',       # Or your database port
-        'PORT': '8506',       # Or your database port
+         'PORT': '5432',       # Or your database port
+        # 'PORT': '8506',       # Or your database port
 
     },
     # 'uzradyab': {
