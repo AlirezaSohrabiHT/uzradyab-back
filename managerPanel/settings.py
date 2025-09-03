@@ -197,11 +197,7 @@ DATABASES = {
         'NAME': 'uzradyab',
         'USER': 'uzradmin',
         'PASSWORD': 'T_3gBf1YDqQN]1o8',
-<<<<<<< HEAD
-        'HOST': '45.139.10.10',
-=======
         'HOST': '45.139.10.10',  
->>>>>>> 462ad22c0fa8392c963a0299c2858c992dc43fc6
         'PORT': '3306',
     },
     'device_user_db': {
@@ -209,14 +205,8 @@ DATABASES = {
         'NAME': 'traccar1',
         'USER': 'admin_traccar',
         'PASSWORD': '3h4wfv7ue9re',
-<<<<<<< HEAD
-         'HOST': '45.139.10.10',
-         'PORT': '5432',
-
-=======
         'HOST': '45.139.10.10',
         'PORT': '5432',
->>>>>>> 462ad22c0fa8392c963a0299c2858c992dc43fc6
     },
 }
 
