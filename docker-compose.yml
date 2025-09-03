@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   web:
     build:
       context: .
-      network: host
+    network_mode: host
     command: uvicorn managerPanel.asgi:application --host 0.0.0.0 --port 36201
     volumes:
       - .:/app
@@ -12,8 +10,6 @@ services:
       - "36201:36201"
     environment:
       VITE_NOTIFICATION_URL: http://127.0.0.1:36201
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:36201/health/')"]
@@ -21,57 +17,3 @@ services:
       timeout: 10s       
       retries: 3         
       start_period: 40s
-    networks:
-      - redisnet
-
-  celery:
-    build:
-      context: .
-      network: host
-    command: celery -A managerPanel worker --loglevel=info
-    volumes:
-      - .:/app
-    environment:
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-    restart: unless-stopped
-    depends_on:
-      - web
-    networks:
-      - redisnet
-
-  celery-beat:
-    build:
-      context: .
-      network: host
-    command: celery -A managerPanel beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    volumes:
-      - .:/app
-    environment:
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-    restart: unless-stopped
-    depends_on:
-      - web
-    networks:
-      - redisnet
-
-  flower:
-    build:
-      context: .
-      network: host
-    command: celery -A managerPanel flower --port=5555
-    ports:
-      - "5555:5555"
-    environment:
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-    restart: unless-stopped
-    depends_on:
-      - celery
-    networks:
-      - redisnet
-
-networks:
-  redisnet:
-    external: true
