@@ -78,8 +78,6 @@ INSTALLED_APPS = [
     'otpmanager',
     'services',
     'uzradyabHandler',
-    'django_celery_beat',
-    'django_celery_results',
 ]
 
 MIDDLEWARE = [
@@ -199,50 +197,26 @@ DATABASES = {
         'NAME': 'uzradyab',
         'USER': 'uzradmin',
         'PASSWORD': 'T_3gBf1YDqQN]1o8',
+<<<<<<< HEAD
         'HOST': '45.139.10.10',
+=======
+        'HOST': '45.139.10.10',  
+>>>>>>> 462ad22c0fa8392c963a0299c2858c992dc43fc6
         'PORT': '3306',
     },
     'device_user_db': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'traccar1',
-        'USER': 'admin',
+        'USER': 'admin_traccar',
         'PASSWORD': '3h4wfv7ue9re',
+<<<<<<< HEAD
          'HOST': '45.139.10.10',
          'PORT': '5432',
 
+=======
+        'HOST': '45.139.10.10',
+        'PORT': '5432',
+>>>>>>> 462ad22c0fa8392c963a0299c2858c992dc43fc6
     },
-    # 'uzradyab': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'traccar1',
-    #     'USER': 'admin',
-    #     'PASSWORD': '3h4wfv7ue9re',
-    #     'HOST': '192.168.1.101',
-    #     'USER': 'postgres',
-    #     'PASSWORD': '3h4wfv7ue9re',
-    #     #'HOST': '62.60.132.92',  # Or your database host
-    #     'PORT': '5432',       # Or your database port
-    # }
 }
-
-
-# server DB 
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'uzradyab',
-#         'USER': 'postgres',
-#         'PASSWORD': '3h4wfv7ue9re',
-#         'HOST': '127.0.0.1',  # Or your database host
-#         'PORT': '5432',       # Or your database port
-#     },
-#     'uzradyab': {
-#         'ENGINE': 'django.db.backends.postgresql',  # secondary database engine
-#         'NAME': 'traccar',
-#         'USER': 'postgres',
-#         'PASSWORD': '3h4wfv7ue9re',
-#         'HOST': '127.0.0.1',
-#         'PORT': '5432',
-#     }
-# }
 

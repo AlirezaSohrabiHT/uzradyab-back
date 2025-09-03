@@ -1,0 +1,517 @@
+(env) PS C:\Users\admin\Desktop\code\new\uzradyab-back> python.exe .\manage.py reverify_all_payments
+Found 240 payments to reverify
+Reverifying Payment ID: 319, Authority: A000000000000000000000000000j1pw51zj
+✗ Payment 319: HTTP 401
+Reverifying Payment ID: 318, Authority: A0000000000000000000000000003nyp68n3
+✗ Payment 318: HTTP 401
+Reverifying Payment ID: 317, Authority: A000000000000000000000000000lr5p3p82
+✗ Payment 317: HTTP 401
+Reverifying Payment ID: 316, Authority: A0000000000000000000000000007xpezv25
+✗ Payment 316: HTTP 401
+Reverifying Payment ID: 315, Authority: A000000000000000000000000000nx5zgnrz
+✗ Payment 315: HTTP 401
+Reverifying Payment ID: 314, Authority: A0000000000000000000000000007xp72v8p
+✗ Payment 314: HTTP 401
+Reverifying Payment ID: 313, Authority: A000000000000000000000000000nx5pgzgw
+✗ Payment 313: HTTP 401
+Reverifying Payment ID: 312, Authority: A000000000000000000000000000lr5y1yx1
+✗ Payment 312: HTTP 401
+Reverifying Payment ID: 311, Authority: A00000000000000000000000000086zoljnz
+✓ Payment 311 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 310, Authority: A000000000000000000000000000g1j383no
+✓ Payment 310 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 309, Authority: A000000000000000000000000000qegmqezx
+✗ Payment 309: HTTP 401
+Reverifying Payment ID: 308, Authority: A000000000000000000000000000vn5lpgov
+✗ Payment 308: HTTP 401
+Reverifying Payment ID: 307, Authority: A000000000000000000000000000wq2135rz
+✓ Payment 307 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 306, Authority: A000000000000000000000000000mg56xz26
+✗ Payment 306: HTTP 401
+Reverifying Payment ID: 305, Authority: A000000000000000000000000000wq2zpzny
+✗ Payment 305: HTTP 401
+Reverifying Payment ID: 304, Authority: A000000000000000000000000000vn5q1xoq
+✓ Payment 304 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 303, Authority: A000000000000000000000000000y782367m
+✗ Payment 303: HTTP 401
+Reverifying Payment ID: 302, Authority: A0000000000000000000000000001ny17z63
+✗ Payment 302: HTTP 401
+Reverifying Payment ID: 301, Authority: A000000000000000000000000000rl56l3dj
+✗ Payment 301: HTTP 401
+Reverifying Payment ID: 300, Authority: A000000000000000000000000000g1jy1lgv
+✗ Payment 300: HTTP 401
+Reverifying Payment ID: 299, Authority: A000000000000000000000000000x58m2rw7
+✗ Payment 299: HTTP 401
+Reverifying Payment ID: 298, Authority: A000000000000000000000000000y782ppzj
+✗ Payment 298: HTTP 401
+Reverifying Payment ID: 297, Authority: A000000000000000000000000000mg5lwmo6
+✓ Payment 297 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 296, Authority: A000000000000000000000000000j1pz211r
+✓ Payment 296 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 295, Authority: A000000000000000000000000000o6yz1pww
+✓ Payment 295 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 294, Authority: A000000000000000000000000000y78ozydo
+✗ Payment 294: HTTP 401
+Reverifying Payment ID: 293, Authority: A000000000000000000000000000o6ylmeeg
+✗ Payment 293: HTTP 401
+Reverifying Payment ID: 292, Authority: A000000000000000000000000000nx5renrv
+✓ Payment 292 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 291, Authority: A000000000000000000000000000y78wpqvl
+✗ Payment 291: HTTP 401
+Reverifying Payment ID: 290, Authority: A0000000000000000000000000002zyxxexq
+✗ Payment 290: HTTP 401
+Reverifying Payment ID: 289, Authority: A000000000000000000000000000vn57v3x2
+✗ Payment 289: HTTP 401
+Reverifying Payment ID: 288, Authority: A000000000000000000000000000pqr2evwd
+✗ Payment 288: HTTP 401
+Reverifying Payment ID: 287, Authority: A00000000000000000000000000086z1dyxj
+✗ Payment 287: HTTP 401
+Reverifying Payment ID: 286, Authority: A000000000000000000000000000g1jovzqd
+✗ Payment 286: HTTP 401
+Reverifying Payment ID: 285, Authority: A000000000000000000000000000qegj2552
+✗ Payment 285: HTTP 401
+Reverifying Payment ID: 284, Authority: A000000000000000000000000000j1p1l152
+✗ Payment 284: HTTP 401
+Reverifying Payment ID: 283, Authority: S000000000000000000000000000000eeenv
+✗ Payment 283: HTTP 422
+Reverifying Payment ID: 282, Authority: A000000000000000000000000000j1p1vy7n
+✗ Payment 282: HTTP 401
+Reverifying Payment ID: 281, Authority: A000000000000000000000000000g1j1yved
+✗ Payment 281: HTTP 401
+Reverifying Payment ID: 280, Authority: A000000000000000000000000000pqryomw2
+✓ Payment 280 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 279, Authority: A0000000000000000000000000003nyz3xgm
+✗ Payment 279: HTTP 401
+Reverifying Payment ID: 278, Authority: A0000000000000000000000000002zyv7y5o
+✗ Payment 278: HTTP 401
+Reverifying Payment ID: 277, Authority: A000000000000000000000000000vn5w1558
+✗ Payment 277: HTTP 401
+Reverifying Payment ID: 276, Authority: A000000000000000000000000000wq2pvdjw
+✓ Payment 276 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 275, Authority: A0000000000000000000000000006gpx1m8y
+✗ Payment 275: HTTP 401
+Reverifying Payment ID: 274, Authority: S000000000000000000000000000000plj3e
+✗ Payment 274: HTTP 422
+Reverifying Payment ID: 273, Authority: S0000000000000000000000000000005nx1z
+✗ Payment 273: HTTP 422
+Reverifying Payment ID: 272, Authority: S000000000000000000000000000000dnqdw
+✗ Payment 272: HTTP 422
+Reverifying Payment ID: 271, Authority: S000000000000000000000000000000opom2
+✗ Payment 271: HTTP 422
+Reverifying Payment ID: 268, Authority: S000000000000000000000000000000ydqld
+✗ Payment 268: HTTP 422
+Reverifying Payment ID: 266, Authority: S000000000000000000000000000000m1ery
+✗ Payment 266: HTTP 422
+Reverifying Payment ID: 265, Authority: S00000000000000000000000000000087v21
+✗ Payment 265: HTTP 422
+Reverifying Payment ID: 263, Authority: S000000000000000000000000000000lgwjz
+✗ Payment 263: HTTP 422
+Reverifying Payment ID: 262, Authority: S0000000000000000000000000000003vel5
+✗ Payment 262: HTTP 422
+Reverifying Payment ID: 260, Authority: S000000000000000000000000000000lgw8z
+✗ Payment 260: HTTP 422
+Reverifying Payment ID: 257, Authority: A000000000000000000000000000o6y3l238
+✗ Payment 257: HTTP 401
+Reverifying Payment ID: 256, Authority: A000000000000000000000000000mg5x3v6z
+✗ Payment 256: HTTP 401
+Reverifying Payment ID: 255, Authority: A0000000000000000000000000002zy6wd2z
+✗ Payment 255: HTTP 401
+Reverifying Payment ID: 254, Authority: S0000000000000000000000000000005nzxv
+✗ Payment 254: HTTP 422
+Reverifying Payment ID: 253, Authority: S000000000000000000000000000000152jq
+✗ Payment 253: HTTP 422
+Reverifying Payment ID: 249, Authority: S000000000000000000000000000000gdl78
+✗ Payment 249: HTTP 422
+Reverifying Payment ID: 248, Authority: A000000000000000000000000000g1jjy1pr
+✗ Payment 248: HTTP 422
+Reverifying Payment ID: 247, Authority: A000000000000000000000000000o6yyzw6y
+✗ Payment 247: HTTP 422
+Reverifying Payment ID: 246, Authority: S000000000000000000000000000000vwron
+✗ Payment 246: HTTP 422
+Reverifying Payment ID: 244, Authority: S000000000000000000000000000000xpxo6
+✗ Payment 244: HTTP 422
+Reverifying Payment ID: 243, Authority: S0000000000000000000000000000003vglw
+✗ Payment 243: HTTP 422
+Reverifying Payment ID: 242, Authority: S000000000000000000000000000000lgq81
+✗ Payment 242: HTTP 422
+Reverifying Payment ID: 221, Authority: S000000000000000000000000000000dn3r3
+✗ Payment 221: HTTP 422
+Reverifying Payment ID: 220, Authority: S000000000000000000000000000000153wd
+✗ Payment 220: HTTP 422
+Reverifying Payment ID: 217, Authority: S000000000000000000000000000000wpgwz
+✗ Payment 217: HTTP 422
+Reverifying Payment ID: 216, Authority: S000000000000000000000000000000m183q
+✗ Payment 216: HTTP 422
+Reverifying Payment ID: 209, Authority: S000000000000000000000000000000qlp68
+✗ Payment 209: HTTP 422
+Reverifying Payment ID: 208, Authority: A000000000000000000000000000vn555m6q
+✗ Payment 208: HTTP 422
+Reverifying Payment ID: 207, Authority: A000000000000000000000000000py666ze6
+✗ Payment 207: HTTP 422
+Reverifying Payment ID: 206, Authority: S0000000000000000000000000000002vr2j
+✗ Payment 206: HTTP 422
+Reverifying Payment ID: 205, Authority: S000000000000000000000000000000qlp8v
+✗ Payment 205: HTTP 422
+Reverifying Payment ID: 204, Authority: A0000000000000000000000000001qmmjm5j
+✗ Payment 204: HTTP 422
+Reverifying Payment ID: 203, Authority: S0000000000000000000000000000003vgmj
+✗ Payment 203: HTTP 422
+Reverifying Payment ID: 202, Authority: S000000000000000000000000000000153lp
+✗ Payment 202: HTTP 422
+Reverifying Payment ID: 201, Authority: S000000000000000000000000000000zvy7r
+✗ Payment 201: HTTP 422
+Reverifying Payment ID: 200, Authority: S000000000000000000000000000000gdxer
+✗ Payment 200: HTTP 422
+Reverifying Payment ID: 186, Authority: S0000000000000000000000000000003vgzj
+✗ Payment 186: HTTP 422
+Reverifying Payment ID: 177, Authority: S000000000000000000000000000000vwrgq
+✗ Payment 177: HTTP 422
+Reverifying Payment ID: 176, Authority: S000000000000000000000000000000yd65o
+✗ Payment 176: HTTP 422
+Reverifying Payment ID: 173, Authority: S000000000000000000000000000000wpry8
+✗ Payment 173: HTTP 422
+Reverifying Payment ID: 172, Authority: A0000000000000000000000000001qmmozyl
+✗ Payment 172: HTTP 422
+Reverifying Payment ID: 171, Authority: S0000000000000000000000000000002vo1x
+✗ Payment 171: HTTP 422
+Reverifying Payment ID: 168, Authority: S000000000000000000000000000000m1nzy
+✗ Payment 168: HTTP 422
+Reverifying Payment ID: 167, Authority: A000000000000000000000000000y533x11v
+✗ Payment 167: HTTP 422
+Reverifying Payment ID: 166, Authority: A000000000000000000000000000wxddr1zx
+✗ Payment 166: HTTP 422
+Reverifying Payment ID: 165, Authority: S000000000000000000000000000000gdr33
+✗ Payment 165: HTTP 422
+Reverifying Payment ID: 164, Authority: S0000000000000000000000000000003vod2
+✗ Payment 164: HTTP 422
+Reverifying Payment ID: 163, Authority: S000000000000000000000000000000op8q7
+✗ Payment 163: HTTP 422
+Reverifying Payment ID: 162, Authority: A000000000000000000000000000ng33ryxl
+✗ Payment 162: HTTP 422
+Reverifying Payment ID: 161, Authority: A000000000000000000000000000y53q73y1
+✗ Payment 161: HTTP 422
+Reverifying Payment ID: 160, Authority: A0000000000000000000000000002q71denw
+✗ Payment 160: HTTP 422
+Reverifying Payment ID: 159, Authority: A000000000000000000000000000y53nrv3o
+✗ Payment 159: HTTP 422
+Reverifying Payment ID: 158, Authority: A0000000000000000000000000007z3ez17d
+✗ Payment 158: HTTP 422
+Reverifying Payment ID: 157, Authority: A000000000000000000000000000rvqegx73
+✗ Payment 157: HTTP 422
+Reverifying Payment ID: 156, Authority: A00000000000000000000000000082gjlzyq
+✗ Payment 156: HTTP 422
+Reverifying Payment ID: 155, Authority: A000000000000000000000000000ee6xzg1y
+✗ Payment 155: HTTP 422
+Reverifying Payment ID: 154, Authority: A000000000000000000000000000wxdo6vvm
+✗ Payment 154: HTTP 422
+Reverifying Payment ID: 153, Authority: A0000000000000000000000000006qjn3lxm
+✗ Payment 153: HTTP 422
+Reverifying Payment ID: 152, Authority: A000000000000000000000000000ng37p3v5
+✗ Payment 152: HTTP 422
+Reverifying Payment ID: 151, Authority: A000000000000000000000000000ee63l8jy
+✗ Payment 151: HTTP 422
+Reverifying Payment ID: 150, Authority: A00000000000000000000000000082g3pjxo
+✗ Payment 150: HTTP 422
+Reverifying Payment ID: 149, Authority: A000000000000000000000000000ng377g2m
+✗ Payment 149: HTTP 422
+Reverifying Payment ID: 148, Authority: A000000000000000000000000000wxdndjzl
+✗ Payment 148: HTTP 422
+Reverifying Payment ID: 147, Authority: S00000000000000000000000000000037dj6
+✗ Payment 147: HTTP 422
+Reverifying Payment ID: 146, Authority: S000000000000000000000000000000rz28z
+✗ Payment 146: HTTP 422
+Reverifying Payment ID: 144, Authority: S00000000000000000000000000000016d83
+✗ Payment 144: HTTP 422
+Reverifying Payment ID: 143, Authority: S000000000000000000000000000000w51z1
+✗ Payment 143: HTTP 422
+Reverifying Payment ID: 139, Authority: S0000000000000000000000000000002jdm5
+✗ Payment 139: HTTP 422
+Reverifying Payment ID: 137, Authority: S000000000000000000000000000000mpvol
+✗ Payment 137: HTTP 422
+Reverifying Payment ID: 136, Authority: S0000000000000000000000000000008yoxw
+✗ Payment 136: HTTP 422
+Reverifying Payment ID: 135, Authority: S000000000000000000000000000000n2nwv
+✗ Payment 135: HTTP 422
+Reverifying Payment ID: 127, Authority: S000000000000000000000000000000yy1zl
+✗ Payment 127: HTTP 422
+Reverifying Payment ID: 126, Authority: A000000000000000000000000000rvqgrzwp
+✗ Payment 126: HTTP 422
+Reverifying Payment ID: 125, Authority: A000000000000000000000000000mrjyexym
+✗ Payment 125: HTTP 422
+Reverifying Payment ID: 124, Authority: A000000000000000000000000000ee6ynv5n
+✗ Payment 124: HTTP 422
+Reverifying Payment ID: 123, Authority: A000000000000000000000000000jjwg72nx
+✗ Payment 123: HTTP 422
+Reverifying Payment ID: 122, Authority: A000000000000000000000000000py63dz86
+✗ Payment 122: HTTP 422
+Reverifying Payment ID: 121, Authority: A000000000000000000000000000geqn8vzd
+✗ Payment 121: HTTP 422
+Reverifying Payment ID: 120, Authority: A000000000000000000000000000qyvro152
+✗ Payment 120: HTTP 422
+Reverifying Payment ID: 119, Authority: A000000000000000000000000000jjwg7dmm
+✗ Payment 119: HTTP 422
+Reverifying Payment ID: 118, Authority: A0000000000000000000000000007z32e31w
+✗ Payment 118: HTTP 422
+Reverifying Payment ID: 117, Authority: A000000000000000000000000000rvqgj1yp
+✗ Payment 117: HTTP 422
+Reverifying Payment ID: 116, Authority: A00000000000000000000000000082g8d81x
+✗ Payment 116: HTTP 422
+Reverifying Payment ID: 115, Authority: A000000000000000000000000000oxg6gwl7
+✗ Payment 115: HTTP 422
+Reverifying Payment ID: 114, Authority: A000000000000000000000000000mrjg8858
+✗ Payment 114: HTTP 422
+Reverifying Payment ID: 113, Authority: A000000000000000000000000000rvqlw7w5
+✗ Payment 113: HTTP 422
+Reverifying Payment ID: 112, Authority: A000000000000000000000000000rvqlw772
+✗ Payment 112: HTTP 422
+Reverifying Payment ID: 111, Authority: A000000000000000000000000000xqj57o7z
+✗ Payment 111: HTTP 422
+Reverifying Payment ID: 110, Authority: A000000000000000000000000000xqj5drj5
+✗ Payment 110: HTTP 422
+Reverifying Payment ID: 109, Authority: A000000000000000000000000000py6lvjl6
+✗ Payment 109: HTTP 422
+Reverifying Payment ID: 108, Authority: A0000000000000000000000000003zw3lqlz
+✗ Payment 108: HTTP 422
+Reverifying Payment ID: 107, Authority: A000000000000000000000000000l3d5nd2z
+✗ Payment 107: HTTP 422
+Reverifying Payment ID: 106, Authority: A000000000000000000000000000oxgy7eqr
+✗ Payment 106: HTTP 422
+Reverifying Payment ID: 105, Authority: A000000000000000000000000000ee6wyz1y
+✗ Payment 105: HTTP 422
+Reverifying Payment ID: 104, Authority: A0000000000000000000000000006qjpzdgl
+✗ Payment 104: HTTP 422
+Reverifying Payment ID: 103, Authority: A00000000000000000000000000082gz8ee5
+✗ Payment 103: HTTP 422
+Reverifying Payment ID: 102, Authority: A000000000000000000000000000rvq5go88
+✗ Payment 102: HTTP 422
+Reverifying Payment ID: 101, Authority: A000000000000000000000000000geqjng3e
+✗ Payment 101: HTTP 422
+Reverifying Payment ID: 100, Authority: A000000000000000000000000000vgy1672y
+✗ Payment 100: HTTP 422
+Reverifying Payment ID: 99, Authority: A000000000000000000000000000l31d56yl
+✗ Payment 99: HTTP 422
+Reverifying Payment ID: 98, Authority: A000000000000000000000000000rvrq5g5g
+✗ Payment 98: HTTP 422
+Reverifying Payment ID: 97, Authority: A000000000000000000000000000ngdd2ym2
+✗ Payment 97: HTTP 422
+Reverifying Payment ID: 96, Authority: A000000000000000000000000000ee8nx385
+✗ Payment 96: HTTP 422
+Reverifying Payment ID: 95, Authority: A000000000000000000000000000qy3oxrpn
+✗ Payment 95: HTTP 422
+Reverifying Payment ID: 94, Authority: A000000000000000000000000000oxoermej
+✗ Payment 94: HTTP 422
+Reverifying Payment ID: 93, Authority: A000000000000000000000000000ee8n3n6l
+✗ Payment 93: HTTP 422
+Reverifying Payment ID: 92, Authority: A0000000000000000000000000002q31xe1x
+✗ Payment 92: HTTP 422
+Reverifying Payment ID: 91, Authority: A000000000000000000000000000vgy6grlz
+✗ Payment 91: HTTP 422
+Reverifying Payment ID: 90, Authority: A0000000000000000000000000006q616m68
+✗ Payment 90: HTTP 422
+Reverifying Payment ID: 89, Authority: A000000000000000000000000000xqnl1x2z
+✗ Payment 89: HTTP 422
+Reverifying Payment ID: 88, Authority: A0000000000000000000000000002q3np6w7
+✗ Payment 88: HTTP 422
+Reverifying Payment ID: 87, Authority: A000000000000000000000000000vgyxn6rw
+✗ Payment 87: HTTP 422
+Reverifying Payment ID: 86, Authority: A0000000000000000000000000001qjoqvyr
+✗ Payment 86: HTTP 422
+Reverifying Payment ID: 85, Authority: A000000000000000000000000000xqnrox36
+✗ Payment 85: HTTP 422
+Reverifying Payment ID: 84, Authority: A0000000000000000000000000006q6rwmlp
+✗ Payment 84: HTTP 422
+Reverifying Payment ID: 83, Authority: A000000000000000000000000000ngdvpr87
+✗ Payment 83: HTTP 422
+Reverifying Payment ID: 82, Authority: A000000000000000000000000000l31ln1w3
+✗ Payment 82: HTTP 422
+Reverifying Payment ID: 81, Authority: A000000000000000000000000000pyj2odq8
+✗ Payment 81: HTTP 422
+Reverifying Payment ID: 80, Authority: A000000000000000000000000000ge2o8jjd
+✗ Payment 80: HTTP 422
+Reverifying Payment ID: 79, Authority: A000000000000000000000000000ng1rpg6x
+✗ Payment 79: HTTP 422
+Reverifying Payment ID: 78, Authority: A000000000000000000000000000devdyqr5
+✗ Payment 78: HTTP 422
+Reverifying Payment ID: 77, Authority: A0000000000000000000000000007zrleyw1
+✗ Payment 77: HTTP 422
+Reverifying Payment ID: 76, Authority: A000000000000000000000000000qyoe3pmz
+✗ Payment 76: HTTP 422
+Reverifying Payment ID: 75, Authority: A000000000000000000000000000rv35ooj2
+✗ Payment 75: HTTP 422
+Reverifying Payment ID: 74, Authority: A000000000000000000000000000y5jqpdow
+✗ Payment 74: HTTP 422
+Reverifying Payment ID: 73, Authority: A000000000000000000000000000z2jq6vnn
+✗ Payment 73: HTTP 422
+Reverifying Payment ID: 72, Authority: A000000000000000000000000000ox1e6z8x
+✗ Payment 72: HTTP 422
+Reverifying Payment ID: 71, Authority: A000000000000000000000000000gel8jx6g
+✗ Payment 71: HTTP 422
+Reverifying Payment ID: 70, Authority: A000000000000000000000000000y5jn86m5
+✗ Payment 70: HTTP 422
+Reverifying Payment ID: 69, Authority: A000000000000000000000000000l3pw5q61
+✗ Payment 69: HTTP 422
+Reverifying Payment ID: 68, Authority: A000000000000000000000000000rvj35wg5
+✗ Payment 68: HTTP 422
+Reverifying Payment ID: 67, Authority: A0000000000000000000000000006q11nq7w
+✗ Payment 67: HTTP 422
+Reverifying Payment ID: 66, Authority: A000000000000000000000000000ngzmv66p
+✗ Payment 66: HTTP 422
+Reverifying Payment ID: 65, Authority: A000000000000000000000000000rvjdqmyw
+✗ Payment 65: HTTP 422
+Reverifying Payment ID: 64, Authority: A000000000000000000000000000jj25wmn1
+✗ Payment 64: HTTP 422
+Reverifying Payment ID: 63, Authority: A0000000000000000000000000003zp2rr1g
+✗ Payment 63: HTTP 422
+Reverifying Payment ID: 62, Authority: A000000000000000000000000000dey5qq6l
+✗ Payment 62: HTTP 422
+Reverifying Payment ID: 61, Authority: A000000000000000000000000000z2jz88lm
+✗ Payment 61: HTTP 422
+Reverifying Payment ID: 60, Authority: A000000000000000000000000000xqlznnev
+✗ Payment 60: HTTP 422
+Reverifying Payment ID: 59, Authority: A0000000000000000000000000002qlmngmq
+✗ Payment 59: HTTP 422
+Reverifying Payment ID: 58, Authority: A000000000000000000000000000ox1drgxj
+✗ Payment 58: HTTP 422
+Reverifying Payment ID: 57, Authority: A000000000000000000000000000wxjz8vyx
+✗ Payment 57: HTTP 422
+Reverifying Payment ID: 56, Authority: A000000000000000000000000000wxjzox6w
+✗ Payment 56: HTTP 422
+Reverifying Payment ID: 55, Authority: A0000000000000000000000000002qlmgqo8
+✗ Payment 55: HTTP 422
+Reverifying Payment ID: 54, Authority: A000000000000000000000000000wxjzwz7e
+✗ Payment 54: HTTP 422
+Reverifying Payment ID: 53, Authority: A000000000000000000000000000xqlz5x1g
+✗ Payment 53: HTTP 422
+Reverifying Payment ID: 52, Authority: A000000000000000000000000000eev5wmq5
+✗ Payment 52: HTTP 422
+Reverifying Payment ID: 51, Authority: A000000000000000000000000000ngzw5owe
+✗ Payment 51: HTTP 422
+Reverifying Payment ID: 50, Authority: A00000000000000000000000000082d3e6y1
+✗ Payment 50: HTTP 422
+Reverifying Payment ID: 49, Authority: A0000000000000000000000000001q2766jg
+✗ Payment 49: HTTP 422
+Reverifying Payment ID: 48, Authority: A000000000000000000000000000mrwmreld
+✗ Payment 48: HTTP 422
+Reverifying Payment ID: 47, Authority: A0000000000000000000000000001q2qgj1e
+✗ Payment 47: HTTP 422
+Reverifying Payment ID: 46, Authority: A000000000000000000000000000z2n8dgwg
+✗ Payment 46: HTTP 422
+Reverifying Payment ID: 45, Authority: A000000000000000000000000000jj8v2l5q
+✗ Payment 45: HTTP 422
+Reverifying Payment ID: 44, Authority: A000000000000000000000000000oxw2w681
+✗ Payment 44: HTTP 422
+Reverifying Payment ID: 43, Authority: A000000000000000000000000000jj8v8pm8
+✗ Payment 43: HTTP 422
+Reverifying Payment ID: 42, Authority: A000000000000000000000000000vgxlr7x3
+✗ Payment 42: HTTP 422
+Reverifying Payment ID: 41, Authority: A0000000000000000000000000006q2zly75
+✗ Payment 41: HTTP 422
+Reverifying Payment ID: 40, Authority: A000000000000000000000000000jj8g6vd7
+✗ Payment 40: HTTP 422
+Reverifying Payment ID: 39, Authority: A000000000000000000000000000eelyzrwr
+✗ Payment 39: HTTP 422
+Reverifying Payment ID: 38, Authority: A000000000000000000000000000pyzljjd2
+✗ Payment 38: HTTP 422
+Reverifying Payment ID: 37, Authority: A000000000000000000000000000y5vdvo67
+✗ Payment 37: HTTP 422
+Reverifying Payment ID: 36, Authority: A0000000000000000000000000003zqvqxgy
+✗ Payment 36: HTTP 422
+Reverifying Payment ID: 35, Authority: A0000000000000000000000000005qmn68pn
+✗ Payment 35: HTTP 422
+Reverifying Payment ID: 34, Authority: A000000000000000000000000000ngpjme8j
+✗ Payment 34: HTTP 422
+Reverifying Payment ID: 33, Authority: A000000000000000000000000000eeljrdd5
+✗ Payment 33: HTTP 401
+Reverifying Payment ID: 32, Authority: A000000000000000000000000000y5vd6dx5
+✓ Payment 32 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 28, Authority: A000000000000000000000000000mr7pe17o
+✗ Payment 28: HTTP 401
+Reverifying Payment ID: 27, Authority: A000000000000000000000000000oxwjwjvo
+✗ Payment 27: HTTP 401
+Reverifying Payment ID: 26, Authority: A000000000000000000000000000y5vyddwq
+✗ Payment 26: HTTP 401
+Reverifying Payment ID: 25, Authority: A000000000000000000000000000qyponj1n
+✗ Payment 25: HTTP 401
+Reverifying Payment ID: 24, Authority: A000000000000000000000000000vgrj7vgz
+✗ Payment 24: HTTP 401
+Reverifying Payment ID: 23, Authority: A000000000000000000000000000wxg6pnyj
+✗ Payment 23: HTTP 401
+Reverifying Payment ID: 22, Authority: A0000000000000000000000000002qrn6v5j
+✓ Payment 22 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 21, Authority: A000000000000000000000000000qypynlxj
+✗ Payment 21: HTTP 401
+Reverifying Payment ID: 20, Authority: A0000000000000000000000000007zvz86v1
+✓ Payment 20 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 19, Authority: A000000000000000000000000000de3o5ygq
+✗ Payment 19: HTTP 401
+Reverifying Payment ID: 18, Authority: A000000000000000000000000000qyp57q1l
+✗ Payment 18: HTTP 401
+Reverifying Payment ID: 17, Authority: A00000000000000000000000000082nm3ep2
+✗ Payment 17: HTTP 401
+Reverifying Payment ID: 16, Authority: A000000000000000000000000000rvwx18wj
+✗ Payment 16: HTTP 401
+Reverifying Payment ID: 15, Authority: A000000000000000000000000000rvwx1y8v
+✗ Payment 15: HTTP 401
+Reverifying Payment ID: 14, Authority: A000000000000000000000000000ox237ldg
+✗ Payment 14: HTTP 401
+Reverifying Payment ID: 13, Authority: A0000000000000000000000000002qr6zvdo
+✗ Payment 13: HTTP 401
+Reverifying Payment ID: 12, Authority: A0000000000000000000000000005q6pgznz
+✗ Payment 12: HTTP 401
+Reverifying Payment ID: 11, Authority: A000000000000000000000000000ngq3o7xm
+✗ Payment 11: HTTP 401
+Reverifying Payment ID: 10, Authority: A000000000000000000000000000rv7r8qyd
+✗ Payment 10: HTTP 401
+Reverifying Payment ID: 9, Authority: A000000000000000000000000000l3vwwq82
+✓ Payment 9 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 8, Authority: A000000000000000000000000000ger8vw27
+✗ Payment 8: HTTP 401
+Reverifying Payment ID: 7, Authority: A0000000000000000000000000006ql3yn17
+✗ Payment 7: HTTP 401
+Reverifying Payment ID: 6, Authority: A000000000000000000000000000dewvwjdg
+✗ Payment 6: HTTP 401
+Reverifying Payment ID: 5, Authority: A00000000000000000000000000082jpjd8l
+✓ Payment 5 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 4, Authority: A000000000000000000000000000l3v2y5om
+✓ Payment 4 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 3, Authority: A0000000000000000000000000007zjvl7z6
+✓ Payment 3 verified but expiration update failed: update_expiration() missing 1 required positional argument: 'user'
+Reverifying Payment ID: 2, Authority: A000000000000000000000000000eezz88e3
+✗ Payment 2: HTTP 401
+Reverifying Payment ID: 1, Authority: A000000000000000000000000000y5xgr81l
+✗ Payment 1: HTTP 401
+
+==================================================
+SUMMARY:
+Total processed: 240
+Successful: 17
+Failed: 223
+(env) PS C:\Users\admin\Desktop\code\new\uzradyab-back> 
+
+
+
+
+// 869689043662261
+// 869689043662568
+// 869689043654896
+// 869689043656289
+
+
+
+**869689043662261
+**869689043662261
+**869689043662568
+**869689043654896
+**869689043658244
+**869689043658244
+**869689043658244
+**869689043656826
+**353701092920111
+**869689043656289
+**351742101905935
+**869689043659580
+**86968943661669
+**869689043659424
+**356153591399453
+**869689043659598
+**356153591383077
