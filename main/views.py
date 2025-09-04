@@ -30,6 +30,7 @@ amount = 1000  # Rial / Required
 description = "توضیحات مربوط به تراکنش را در این قسمت وارد کنید"  # Required
 phone = 'YOUR_PHONE_NUMBER'  # Optional
 CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
+#CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
 
 class AccountChargeAPIView(APIView):
     def get(self, request):
@@ -53,12 +54,13 @@ class PayAPIView(APIView):
         callback_url = f"{CallbackURL}{device_id_number}"
         
         try:
-            # Find account charge settings
-            settings = AccountCharge.objects.filter(amount=amount, period=period).latest('timestamp')
-            amount = int(settings.amount)
-            accountCharge = AccountCharge.objects.get(amount=amount, period=period)
+            settings_obj = AccountCharge.objects.filter(amount=amount, period=period).first()
+            if not settings_obj:
+                return Response({'error': 'Invalid payment plan'}, status=400)
             
-            # Create a new Payment entry with status "Pending"
+            amount = int(settings_obj.amount)
+            
+            # Create payment with proper account_charge reference
             payment = Payment.objects.create(
                 unique_id=uniqueId,
                 name=name,
@@ -67,13 +69,13 @@ class PayAPIView(APIView):
                 period=period,
                 amount=amount,
                 status="معلق",
-                account_charge=accountCharge,
+                account_charge=settings_obj,  # Make sure this is set
             )
 
             # Prepare data for Zarinpal payment request
             response_data = send_request_logic(
                 amount,
-                settings.description,
+                settings_obj.description,
                 phone,
                 callback_url,
                 payment.id,
@@ -162,7 +164,7 @@ def Verify(authority):
                     payment.save()
 
                     # Call utils
-                    update_expiration(payment.device_id_number, payment.period)
+                    update_expiration(payment.device_id_number, payment.account_charge.duration_days)
 
                     return JsonResponse({'status': True, 'RefID': response_data['RefID'], 'period': period})
                 except Payment.DoesNotExist:
@@ -253,9 +255,9 @@ class VerifyAPIView(APIView):
         try:
             # Retrieve the Payment object based on the authority code
             payment = Payment.objects.get(payment_code=authority)
-            amount = float(payment.amount)  # Convert Decimal to float
+            amount = int(payment.amount)  # Convert to int for Zarinpal
             
-            # Prepare verification data with the correct amount
+            # Prepare verification data
             verification_data = {
                 "merchant_id": settings.MERCHANT,
                 "amount": amount,
@@ -265,55 +267,56 @@ class VerifyAPIView(APIView):
 
             # Send verification request to Zarinpal
             response = requests.post(ZP_API_VERIFY, data=json.dumps(verification_data), headers=headers)
-            print("Data sent for verification:", verification_data)
-            print("Response status code:", response.status_code)
             
             if response.status_code == 200:
                 try:
                     response_data = response.json()
-                    print("Parsed response data:", response_data)
                     
-                    # Verify that 'data' is a dictionary before accessing 'code'
-                    if isinstance(response_data.get('data'), dict) and response_data['data'].get('code') in [100, 101]:
-                        # Update the payment object with successful verification
-                        payment.status = "موفق"  # Set status as successful
+                    # Check if verification was successful
+                    if (isinstance(response_data.get('data'), dict) and 
+                        response_data['data'].get('code') in [100, 101]):
+                        
+                        # Update payment as successful
+                        payment.status = "موفق"
                         payment.verification_code = response_data['data']['ref_id']
                         payment.save()
                         
-                        duration_days = payment.account_charge.duration_days
+                        # Update device expiration using utils
+                        try:
+                            update_expiration(payment.device_id_number, payment.account_charge.duration_days)
+                        except Exception as e:
+                            print(f"Warning: Failed to update device expiration: {e}")
+                        
                         return Response({
                             'status': True,
                             'RefID': response_data['data']['ref_id'],
-                            'duration_days': duration_days,
+                            'duration_days': payment.account_charge.duration_days,
                             'card_pan': response_data['data'].get('card_pan'),
-                            'fee_type': response_data['data'].get('fee_type'),
                             'fee': response_data['data'].get('fee'),
                             'code': response_data['data'].get('code'),
                             'message': response_data['data'].get('message'),
                         })
                     else:
-                        # Handle unsuccessful verification codes or unexpected response structure
-                        code = response_data['data'].get('code') if isinstance(response_data.get('data'), dict) else 'invalid response format'
-                        print("Payment verification failed with code:", code)
-                        payment.status = "ناموفق"  # Mark as unsuccessful
+                        # Handle failed verification
+                        payment.status = "ناموفق"
                         payment.save()
-                        return Response({'status': False, 'code': code})
+                        
+                        error_code = response_data.get('data', {}).get('code', 'verification_failed')
+                        return Response({
+                            'status': False, 
+                            'code': error_code,
+                            'message': 'Payment verification failed'
+                        })
+                        
                 except ValueError:
-                    print("Error parsing JSON response:", response.text)
-                    return Response({'status': False, 'code': 'invalid json response'})
+                    return Response({'status': False, 'code': 'invalid_json_response'})
             else:
-                # Non-200 response status
-                return Response({'status': False, 'code': response.status_code})
+                return Response({'status': False, 'code': f'http_error_{response.status_code}'})
 
         except Payment.DoesNotExist:
-            print("Payment not found for authority:", authority)
-            return Response({'status': False, 'code': 'Payment not found'})
-        except requests.exceptions.Timeout:
-            print("Request to ZP_API_VERIFY timed out")
-            return Response({'status': False, 'code': 'timeout'})
-        except requests.exceptions.ConnectionError:
-            print("Connection error to ZP_API_VERIFY")
-            return Response({'status': False, 'code': 'connection error'})
+            return Response({'status': False, 'code': 'payment_not_found'})
+        except requests.exceptions.RequestException as e:
+            return Response({'status': False, 'code': 'network_error'})
 
 
 class PaymentPagination(PageNumberPagination):

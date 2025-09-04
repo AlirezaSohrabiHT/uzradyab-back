@@ -20,8 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . /app/
 
-# Run migrations
-RUN python manage.py migrate
+
 
 # Create log directories
 RUN mkdir -p /var/log/django /var/log/supervisor
