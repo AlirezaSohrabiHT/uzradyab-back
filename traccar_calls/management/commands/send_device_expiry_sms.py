@@ -170,7 +170,7 @@ class Command(BaseCommand):
                                 f"for user {device_data['user_id']}: {e}"
                             )
                         )
-            
+            logger.info(f"SMS notifications completed. Processed: {total_devices_processed} devices,Total SMS sent: {total_sms_sent}")
             self.stdout.write(
                 self.style.SUCCESS(
                     f"SMS notifications completed. Processed: {total_devices_processed} devices, "
