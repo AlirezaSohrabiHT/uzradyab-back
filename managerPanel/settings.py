@@ -13,6 +13,8 @@ import os
 import pymysql
 pymysql.install_as_MySQLdb()
 from pathlib import Path
+from celery.schedules import crontab
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -80,6 +82,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+CELERY_BROKER_URL = "redis://redis:6379/0"  
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+CELERY_TIMEZONE = "Asia/Tehran"   # or whatever your local timezone is
+CELERY_ENABLE_UTC = False
 
 CORS_ALLOWED_ORIGINS = [
     "http://uzradyab.ir",
@@ -128,6 +134,7 @@ INSTALLED_APPS = [
     'otpmanager',
     'services',
     'uzradyabHandler',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -247,7 +254,7 @@ DATABASES = {
         'NAME': 'uzradyab',
         'USER': 'uzradmin',
         'PASSWORD': 'T_3gBf1YDqQN]1o8',
-        'HOST': '45.139.10.10',  
+        'HOST': '127.0.0.1',  
         'PORT': '3306',
     },
     'device_user_db': {
@@ -255,8 +262,30 @@ DATABASES = {
         'NAME': 'traccar1',
         'USER': 'admin_traccar',
         'PASSWORD': '3h4wfv7ue9re',
-        'HOST': '45.139.10.10',
+        'HOST': '127.0.0.1',
         'PORT': '5432',
     },
 }
 
+CELERY_BEAT_SCHEDULE = {
+    "check-expired-devices-every-6h": {
+        "task": "traccar_calls.tasks.run_check_expired_devices",
+        "schedule": crontab(minute=0, hour=2),
+    },
+    "send-expiry-sms-daily": {
+        "task": "traccar_calls.tasks.run_send_device_expiry_sms",
+        "schedule": crontab(minute=0, hour=18),
+    },
+}
+
+
+# CELERY_BEAT_SCHEDULE = {
+#     "check-expired-devices-every-2min": {
+#         "task": "traccar_calls.tasks.run_check_expired_devices",
+#         "schedule": timedelta(minutes=2),
+#     },
+#     "send-expiry-sms-every-2min": {
+#         "task": "traccar_calls.tasks.run_send_device_expiry_sms",
+#         "schedule": timedelta(minutes=2),
+#     },
+# }
