@@ -4,12 +4,15 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from dateutil import parser
+from django.utils import timezone
 import requests
 import logging
 from django.db import connections
 from django.conf import settings
 from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
+from django.utils.timezone import make_aware
 from rest_framework import generics
 logger = logging.getLogger(__name__)
 
@@ -70,6 +73,23 @@ class FetchDevicesView(generics.GenericAPIView):
                     if search in d.get('name', '').lower() or
                        search in d.get('uniqueId', '').lower()
                 ]
+
+            # 🔍 status filter (active, inactive, expired)
+            status = request.query_params.get('status')
+            if status:
+                now = timezone.now()  # always aware datetime
+
+                if status == "active":
+                    devices = [d for d in devices if d.get('status') == "online"]
+
+                elif status == "inactive":
+                    devices = [d for d in devices if d.get('status') == "offline"]
+
+                elif status == "expired":
+                    devices = [
+                        d for d in devices
+                        if d.get("expirationTime") and parser.isoparse(d["expirationTime"]) < now
+                    ]
 
             # 📄 صفحه‌بندی محلی
             paginated = self.paginate_queryset(devices)
