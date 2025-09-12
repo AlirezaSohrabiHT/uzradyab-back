@@ -13,10 +13,62 @@ import os
 import pymysql
 pymysql.install_as_MySQLdb()
 from pathlib import Path
+from celery.schedules import crontab
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
 
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    # How log records are formatted
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    # Handlers define where log messages are sent
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'INFO',
+            # This handler rotates logs when they reach 5MB, keeping up to 5 old files.
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'commands.log',
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+    },
+    # Loggers are the entry point into the logging system
+    'loggers': {
+        # This logger is for your specific app
+        'traccar_calls': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        # This is the root logger
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -30,6 +82,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+CELERY_BROKER_URL = "redis://redis:6379/0"  
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+CELERY_TIMEZONE = "Asia/Tehran"   # or whatever your local timezone is
+CELERY_ENABLE_UTC = False
 
 CORS_ALLOWED_ORIGINS = [
     "http://uzradyab.ir",
@@ -78,6 +134,7 @@ INSTALLED_APPS = [
     'otpmanager',
     'services',
     'uzradyabHandler',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -197,7 +254,7 @@ DATABASES = {
         'NAME': 'uzradyab',
         'USER': 'uzradmin',
         'PASSWORD': 'T_3gBf1YDqQN]1o8',
-        'HOST': '45.139.10.10',  
+        'HOST': '127.0.0.1',  
         'PORT': '3306',
     },
     'device_user_db': {
@@ -205,8 +262,30 @@ DATABASES = {
         'NAME': 'traccar1',
         'USER': 'admin_traccar',
         'PASSWORD': '3h4wfv7ue9re',
-        'HOST': '45.139.10.10',
+        'HOST': '127.0.0.1',
         'PORT': '5432',
     },
 }
 
+CELERY_BEAT_SCHEDULE = {
+    "check-expired-devices-every-6h": {
+        "task": "traccar_calls.tasks.run_check_expired_devices",
+        "schedule": crontab(minute=0, hour=2),
+    },
+    "send-expiry-sms-daily": {
+        "task": "traccar_calls.tasks.run_send_device_expiry_sms",
+        "schedule": crontab(minute=0, hour=18),
+    },
+}
+
+
+# CELERY_BEAT_SCHEDULE = {
+#     "check-expired-devices-every-2min": {
+#         "task": "traccar_calls.tasks.run_check_expired_devices",
+#         "schedule": timedelta(minutes=2),
+#     },
+#     "send-expiry-sms-every-2min": {
+#         "task": "traccar_calls.tasks.run_send_device_expiry_sms",
+#         "schedule": timedelta(minutes=2),
+#     },
+# }

@@ -172,7 +172,7 @@ class Command(BaseCommand):
                             f"Error saving device {device['device_id']} for user {device['user_id']}: {e}"
                         )
                     )
-            
+            logger.info(f"Completed! Saved: {saved_count}, Updated: {updated_count}")
             self.stdout.write(
                 self.style.SUCCESS(
                     f"Completed! Saved: {saved_count}, Updated: {updated_count}"

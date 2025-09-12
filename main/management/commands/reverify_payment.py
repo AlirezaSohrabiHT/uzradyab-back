@@ -86,7 +86,7 @@ class Command(BaseCommand):
 
                         # Update expiration if needed
                         try:
-                            update_expiration(payment.device_id_number, payment.period)
+                            update_expiration(payment.device_id_number, payment.account_charge.duration_days)
                             self.stdout.write(
                                 self.style.SUCCESS(
                                     f"\n✓ Payment {payment.id} verified successfully!"
