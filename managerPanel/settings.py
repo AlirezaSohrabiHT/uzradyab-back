@@ -254,7 +254,7 @@ DATABASES = {
         'NAME': 'uzradyab',
         'USER': 'uzradmin',
         'PASSWORD': 'T_3gBf1YDqQN]1o8',
-        'HOST': '127.0.0.1',  
+        'HOST': '45.139.10.10',
         'PORT': '3306',
     },
     'device_user_db': {
@@ -262,7 +262,7 @@ DATABASES = {
         'NAME': 'traccar1',
         'USER': 'admin_traccar',
         'PASSWORD': '3h4wfv7ue9re',
-        'HOST': '127.0.0.1',
+        'HOST': '45.139.10.10',
         'PORT': '5432',
     },
 }

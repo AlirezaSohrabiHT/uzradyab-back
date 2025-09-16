@@ -2,10 +2,16 @@
 from rest_framework.test import APIRequestFactory
 from django.contrib.auth import get_user_model
 from traccar_calls.views import UpdateDeviceView
+import logging
+
+logger = logging.getLogger('django')
 
 User = get_user_model()
 
 def update_expiration(device_id, duration_days):
+
+    logger.info(f"device_id {device_id} and duration { duration_days}")
+    
     """
     Call UpdateDeviceView.put directly to set a new expiration date.
     """

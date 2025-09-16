@@ -13,6 +13,9 @@ from decimal import Decimal
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
 from .utils import update_expiration
+import logging
+
+logger = logging.getLogger('django')
 
 #? sandbox merchant 
 if settings.SANDBOX:
@@ -29,8 +32,8 @@ else:
 amount = 1000  # Rial / Required
 description = "توضیحات مربوط به تراکنش را در این قسمت وارد کنید"  # Required
 phone = 'YOUR_PHONE_NUMBER'  # Optional
-CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
-#CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
+# CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
+CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
 
 class AccountChargeAPIView(APIView):
     def get(self, request):
@@ -91,6 +94,7 @@ class PayAPIView(APIView):
             return Response({'error': f"Error processing payment: {str(e)}"}, status=500)
 
 def send_request_logic(amount, description, phone, callback_url, unique_id):
+    
     data = {
         "merchant_id": settings.MERCHANT,
         "amount": amount,
@@ -163,6 +167,8 @@ def Verify(authority):
                     payment.verification_code = response_data['RefID']
                     payment.save()
 
+                    logger.info(f"payment: {payment}")
+                    logger.info(f"test123123t")
                     # Call utils
                     update_expiration(payment.device_id_number, payment.account_charge.duration_days)
 
