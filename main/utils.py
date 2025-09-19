@@ -1,7 +1,12 @@
 # utils.py
-from rest_framework.test import APIRequestFactory
+from requests.auth import HTTPBasicAuth
 from django.contrib.auth import get_user_model
 from traccar_calls.views import UpdateDeviceView
+from django.conf import settings
+from rest_framework import status
+from rest_framework.response import Response
+from datetime import datetime, timedelta, timezone
+import requests
 import logging
 
 logger = logging.getLogger('django')
@@ -15,30 +20,42 @@ def update_expiration(device_id, duration_days):
     """
     Call UpdateDeviceView.put directly to set a new expiration date.
     """
-    from datetime import datetime, timedelta
     
-    new_expiration = (datetime.utcnow() + timedelta(days=duration_days)).strftime('%Y-%m-%dT%H:%M:%SZ')
     
-    # Get or create a system user for automated operations
-    # Use 'phone' instead of 'username' since that's your User model's identifier
-    system_user, created = User.objects.get_or_create(
-        phone='system_payment',  # Changed from username to phone
-        defaults={
-            'is_staff': True,
+    new_expiration = (datetime.now(timezone.utc) + timedelta(days=duration_days)).isoformat(timespec="milliseconds")
+    url = f"{settings.TRACCAR_API_URL}/devices/{device_id}"
+    headers = {
+            "Authorization": f"Bearer e8fbe7c116e452ed8c666790cfb5ba30ed7e8f97"
         }
-    )
-    
-    # Create a fake DRF request
-    factory = APIRequestFactory()
     data = {
-        "attributes": {
-            "expiration": new_expiration
-        }
+        "expirationTime": new_expiration
     }
-    request = factory.put(f'/devices/{device_id}', data, format='json')
-    request.user = system_user
-    
-    # Call the view method directly
-    view = UpdateDeviceView.as_view()
-    response = view(request, device_id=device_id)
-    return response
+    try:
+        # Step 1: GET full device
+        resp = requests.get(
+            url,
+            auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
+            timeout=30
+        )
+        if resp.status_code != 200:
+            return Response({"error": f"GET failed: {resp.text}"}, status=resp.status_code)
+
+        device = resp.json()
+
+        # Step 2: update expirationTime
+        device["expirationTime"] = new_expiration
+
+        # Step 3: PUT full device with Basic Auth
+        r = requests.put(
+            url,
+            json=device,
+            auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
+            timeout=30
+        )
+
+        if r.status_code == 200:
+            return Response(r.json(), status=200)
+        return Response({"detail": r.text}, status=r.status_code)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
