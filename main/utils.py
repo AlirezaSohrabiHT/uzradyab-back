@@ -24,12 +24,6 @@ def update_expiration(device_id, duration_days):
     
     new_expiration = (datetime.now(timezone.utc) + timedelta(days=duration_days)).isoformat(timespec="milliseconds")
     url = f"{settings.TRACCAR_API_URL}/devices/{device_id}"
-    headers = {
-            "Authorization": f"Bearer e8fbe7c116e452ed8c666790cfb5ba30ed7e8f97"
-        }
-    data = {
-        "expirationTime": new_expiration
-    }
     try:
         # Step 1: GET full device
         resp = requests.get(
