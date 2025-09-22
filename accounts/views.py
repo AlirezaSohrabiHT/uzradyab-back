@@ -10,12 +10,76 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from datetime import timedelta
+from django.utils.timezone import now
 from django.contrib.auth.hashers import check_password
 import re
 from django.contrib.auth import get_user_model
 import requests
+import logging
+from otpmanager.models import OTP
+from otpmanager.views import send_otp, verify_otp
+
+auth_logger = logging.getLogger('authlogs')
 
 User = get_user_model()
+
+def get_client_ip(request):
+    """Get client IP address from request"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+def log_auth_attempt(event_type, phone_number, success, details=None, request=None, user_id=None):
+    """
+    Log authentication attempts with detailed information
+    
+    Args:
+        event_type: 'login', 'signup', 'reset_password', 'otp_send', 'otp_verify'
+        phone_number: User's phone number
+        success: Boolean indicating success/failure
+        details: Additional details (error message, etc.)
+        request: Django request object for IP tracking
+        user_id: User ID if available
+    """
+    client_ip = get_client_ip(request) if request else 'Unknown'
+    user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown') if request else 'Unknown'
+    
+    log_data = {
+        'event': event_type,
+        'phone_number': phone_number,
+        'success': success,
+        'ip_address': client_ip,
+        'user_agent': user_agent,
+        'user_id': user_id,
+        'timestamp': now().isoformat(),
+        'details': details or {}
+    }
+    
+    if success:
+        auth_logger.info(f"SUCCESS - {event_type.upper()} | Phone: {phone_number} | IP: {client_ip} | User ID: {user_id}")
+    else:
+        auth_logger.warning(f"FAILED - {event_type.upper()} | Phone: {phone_number} | IP: {client_ip} | Error: {details} | User Agent: {user_agent}")
+
+
+def create_standard_response(success=True, message="", data=None, errors=None):
+    """Create standardized API response"""
+    response_data = {
+        "success": success,
+        "message": message
+    }
+    
+    if data:
+        response_data.update(data)
+    
+    if errors:
+        response_data["errors"] = errors
+    
+    return response_data
+
 
 def validate_and_normalize_phone(phone):
     """Validate and normalize phone number to standard format"""
@@ -103,6 +167,82 @@ def edit_profile(request):
         return Response(
             "خطای غیرمنتظره رخ داده است.",
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+def reset_password(request):
+    """
+    Multi-step password reset process:
+    1. Send OTP to phone number
+    2. Verify OTP
+    3. Set new password
+    """
+    phone_number = validate_and_normalize_phone(request.data.get('phoneNumber'))
+    otp_code = request.data.get('otp')
+    new_password = request.data.get('newPassword')
+
+    if not phone_number:
+        log_auth_attempt('reset_password', phone_number or 'INVALID', False, 
+                        'Invalid phone number format')
+        return Response(
+            create_standard_response(False, "فرمت شماره تلفن وارد شده صحیح نیست."),
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        customer = User.objects.get(phone=phone_number)
+    except User.DoesNotExist:
+        log_auth_attempt('reset_password', phone_number, False, 'User not found')
+        return Response(
+            create_standard_response(False, "کاربری با این شمارۀ تلفن یافت نشد."),
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Step 2: Verify OTP
+    if otp_code:
+        verified, message = verify_otp(phone_number, otp_code)
+
+        if not verified:
+            log_auth_attempt('reset_password', phone_number, False, 
+                            f'OTP verification failed: {message}', user_id=customer.id)
+            return Response(
+                create_standard_response(False, message),
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        log_auth_attempt('reset_password', phone_number, True, 
+                        'OTP verified successfully', user_id=customer.id)
+        return Response(
+            create_standard_response(True, "کد وارد شده تایید شد.", {"user_id": customer.id}),
+            status=status.HTTP_200_OK
+        )
+
+    # Step 3: Set new password
+    elif new_password:
+        customer.set_password(new_password)
+        customer.save()
+
+        OTP.objects.filter(phone=phone_number).delete()
+        log_auth_attempt('reset_password', phone_number, True, 
+                        'Password reset completed successfully', user_id=customer.id)
+        return Response(
+            create_standard_response(True, "رمز عبور با موفقیت تغییر یافت."),
+            status=status.HTTP_200_OK
+        )
+
+    # Step 1: Send OTP
+    else:
+        success, msg = send_otp(phone_number)
+
+        if not success:
+            return Response(
+                create_standard_response(False, msg),
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response(
+            create_standard_response(True, msg, {"otp_sent": True}),
+            status=status.HTTP_200_OK
         )
 
 @api_view(['POST'])
