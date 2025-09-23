@@ -5,7 +5,7 @@ from .models import Service, CreditTransaction
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
-        fields = ['id', 'name', 'description', 'credit_cost', 'duration_days']
+        fields = ['id', 'name', 'description', 'credit_cost', 'duration_days', 'price']
 
 class CreditTransactionSerializer(serializers.ModelSerializer):
     service_name = serializers.CharField(source='service.name', read_only=True)
