@@ -7,7 +7,7 @@ class Service(models.Model):
     description = models.TextField(blank=True)
     credit_cost = models.PositiveIntegerField()  # e.g., 100
     duration_days = models.PositiveIntegerField()  # e.g., 365
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.BigIntegerField()
     
 
     def __str__(self):
