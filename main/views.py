@@ -12,7 +12,8 @@ import time
 from decimal import Decimal
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
-from .utils import update_expiration
+from .utils import update_expiration, increase_balance
+from services.models import Service
 import logging
 
 logger = logging.getLogger('django')
@@ -34,6 +35,7 @@ description = "توضیحات مربوط به تراکنش را در این قس
 phone = 'YOUR_PHONE_NUMBER'  # Optional
 # CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
 CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
+SecondCallbackURL = 'http://localhost:5173/payment-verify/'
 
 class AccountChargeAPIView(APIView):
     def get(self, request):
@@ -53,17 +55,38 @@ class PayAPIView(APIView):
         name = data.get('name')
         device_id_number = data.get('id')
         accountcharges_id = data.get('accountcharges_id')
-        
+        payment_type = data.get('payment_type')
+        account_charge = None
+
         callback_url = f"{CallbackURL}{device_id_number}"
-        
+
         try:
-            settings_obj = AccountCharge.objects.filter(amount=amount, period=period).first()
-            if not settings_obj:
-                return Response({'error': 'Invalid payment plan'}, status=400)
+            if payment_type == 'service':
+                service = Service.objects.filter(price=amount).first()
+                if not service:
+                    return Response({'error': 'Invalid service plan'}, status=400)
+
+                amount = int(service.price)
+                description = service.description
+                callback_url = f"{SecondCallbackURL}"
+
+                # ✅ ensure these exist, but don't overwrite with 1
+                if not uniqueId or not phone:
+                    return Response({'error': 'Missing required fields (uniqueId, phone, device_id_number)'}, status=400)
+
+
+            else:  # account charge
+                account_charge = AccountCharge.objects.filter(
+                    amount=amount, period=period
+                ).first()
+                if not account_charge:
+                    return Response({'error': 'Invalid account charge plan'}, status=400)
+
+                amount = int(account_charge.amount)  # ✅ always use DB value
+                description = account_charge.description
             
-            amount = int(settings_obj.amount)
             
-            # Create payment with proper account_charge reference
+            # Create Payment
             payment = Payment.objects.create(
                 unique_id=uniqueId,
                 name=name,
@@ -72,24 +95,25 @@ class PayAPIView(APIView):
                 period=period,
                 amount=amount,
                 status="معلق",
-                account_charge=settings_obj,  # Make sure this is set
+                account_charge=account_charge or None,
             )
-
-            # Prepare data for Zarinpal payment request
+            # Send to Zarinpal
             response_data = send_request_logic(
                 amount,
-                settings_obj.description,
+                description,
                 phone,
                 callback_url,
                 payment.id,
             )
 
-            # Send the formatted response back to the frontend
             if response_data['status']:
                 return Response({'url': response_data['url']})
             else:
-                return Response({'error': 'Payment initiation failed', 'details': response_data.get('code')}, status=500)
-                
+                return Response(
+                    {'error': 'Payment initiation failed', 'details': response_data.get('code')},
+                    status=500
+                )
+
         except Exception as e:
             return Response({'error': f"Error processing payment: {str(e)}"}, status=500)
 
@@ -104,6 +128,7 @@ def send_request_logic(amount, description, phone, callback_url, unique_id):
     }
     headers = {'content-type': 'application/json'}
     
+    
     try:
         response = requests.post(ZP_API_REQUEST, data=json.dumps(data), headers=headers, timeout=10)
         if 'html' in response.headers.get('Content-Type', '').lower():
@@ -111,6 +136,8 @@ def send_request_logic(amount, description, phone, callback_url, unique_id):
             return {'status': False, 'code': 'server_error'}
 
         response_data = response.json()
+        logger.info(f"{response_data}")
+
 
         if response.status_code == 200 and response_data.get('data', {}).get('code') == 100:
             authority = response_data['data']['authority']
@@ -243,17 +270,15 @@ class SendRequestAPIView(APIView):
         except requests.exceptions.ConnectionError:
             return Response({'status': False, 'code': 'connection error'})
 
-
-
-
-
-
-
-
 class VerifyAPIView(APIView):
     def post(self, request):
         data = request.data
         authority = data.get('Authority')
+        payment_type = data.get('payment_type')
+        traccar_id = data.get('traccar_id')
+        service_id = data.get('service_id')
+
+        logger.info("Asdasdasd")
         
         if not authority:
             return Response({'status': False, 'code': 'Authority not provided'})
@@ -286,17 +311,25 @@ class VerifyAPIView(APIView):
                         payment.status = "موفق"
                         payment.verification_code = response_data['data']['ref_id']
                         payment.save()
-                        
-                        # Update device expiration using utils
-                        try:
-                            update_expiration(payment.device_id_number, payment.account_charge.duration_days)
-                        except Exception as e:
-                            print(f"Warning: Failed to update device expiration: {e}")
+                        if payment_type == 'service':
+                            try:
+                                increase_balance(traccar_id, service_id)
+                                duration_days = 365
+                            except Exception as e:
+                                print(f"Warning: Failed to activate service: {e}")
+
+                        else:
+                            # Update device expiration using utils
+                            try:
+                                update_expiration(payment.device_id_number, payment.account_charge.duration_days)
+                                duration_days = payment.account_charge.duration_day
+                            except Exception as e:
+                                print(f"Warning: Failed to update device expiration: {e}")
                         
                         return Response({
                             'status': True,
                             'RefID': response_data['data']['ref_id'],
-                            'duration_days': payment.account_charge.duration_days,
+                            'duration_days': duration_days,
                             'card_pan': response_data['data'].get('card_pan'),
                             'fee': response_data['data'].get('fee'),
                             'code': response_data['data'].get('code'),

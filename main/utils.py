@@ -4,14 +4,33 @@ from django.contrib.auth import get_user_model
 from traccar_calls.views import UpdateDeviceView
 from django.conf import settings
 from rest_framework import status
+from services.models import Service
+from accounts.models import User
 from rest_framework.response import Response
 from datetime import datetime, timedelta, timezone
 import requests
 import logging
+from decimal import Decimal
 
 logger = logging.getLogger('django')
 
 User = get_user_model()
+
+
+def increase_balance(traccar_id, service_id):
+    logger.info(f"asasasas{service_id}")
+    try:
+        user = User.objects.get(traccar_id=traccar_id)
+        service = Service.objects.get(id=service_id)
+
+        # Make sure both fields are Decimal-compatible
+        user.credit = user.credit + Decimal(service.credit_cost)
+        user.save(update_fields=["credit"])
+        return True
+
+    except User.DoesNotExist:
+        return False
+
 
 def update_expiration(device_id, duration_days):
 

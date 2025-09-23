@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from main.views import PayAPIView,  VerifyAPIView , AccountChargeAPIView , SendRequestAPIView
+from main.views import PayAPIView,  VerifyAPIView , AccountChargeAPIView , SendRequestAPIView, PaymentListView
 from django.urls import path , include
 from main.views import PayAPIView, VerifyAPIView, AccountChargeAPIView, SendRequestAPIView
 from uzradyabHandler.views import ExpiredDevicesView 
@@ -28,6 +28,7 @@ urlpatterns = [
     path('request/', SendRequestAPIView.as_view(), name='request'),
     path('accountChargeList/', AccountChargeAPIView.as_view(), name='account_charge'),
     path('verify/', VerifyAPIView.as_view(), name='verify'),
+    path('payments/', PaymentListView.as_view(), name='payment-list'),
     path('api/traccar/', include('traccar_calls.urls')),
     path('api/services/', include('services.urls')),
     path('api/main/', include('main.urls')),
