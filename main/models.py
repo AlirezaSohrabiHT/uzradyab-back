@@ -2,6 +2,7 @@ from django.db import models
 
 
 class Payment(models.Model):
+    user = models.ForeignKey('accounts.User', on_delete = models.CASCADE, null = True, blank = True)
     unique_id = models.CharField(max_length=100, verbose_name="شناسه یکتا", default="")
     name = models.CharField(max_length=100, verbose_name="نام", default="")
     device_id_number = models.CharField(max_length=100, verbose_name="شناسه دستگاه", default="")
@@ -27,6 +28,7 @@ class AccountCharge(models.Model):
     period = models.CharField(max_length=100, verbose_name="دوره", default="")
     description = models.CharField(max_length=100, verbose_name="توضیحات", default="")
     amount = models.DecimalField(max_digits=20, decimal_places=0, verbose_name="هزینه (ریال)", default=None, null=True)
+    credit_cost = models.PositiveIntegerField()
     phone = models.DecimalField(max_digits=11, decimal_places=0, verbose_name="تلفن برای درگاه پرداخت", default=None, null=True, blank=True)
     duration_days = models.IntegerField(verbose_name="مدت اعتبار (روز)", default=1)
     timestamp = models.DateTimeField(auto_now_add=True, verbose_name="زمان")
