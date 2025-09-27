@@ -1,4 +1,3 @@
-
 from django.conf import settings
 import requests
 import json
@@ -13,7 +12,11 @@ from decimal import Decimal
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
 from .utils import update_expiration, increase_balance
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from services.models import Service
+from random import randint
+from django.db import transaction
 import logging
 
 logger = logging.getLogger('django')
@@ -34,8 +37,109 @@ amount = 1000  # Rial / Required
 description = "توضیحات مربوط به تراکنش را در این قسمت وارد کنید"  # Required
 phone = 'YOUR_PHONE_NUMBER'  # Optional
 # CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
-CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
-SecondCallbackURL = 'http://localhost:5173/payment-verify/'
+# CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
+# SecondCallbackURL = 'http://localhost:5173/payment-verify/'
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def buy_package(request):
+    user = request.user
+    device_id = request.data.get('deviceId')
+    package_id = request.data.get('packageId')
+
+    if not package_id:
+        return Response(
+            {"success": False, "message": "سرویس مورد نظر را انتخاب کنید."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if not device_id:
+        return Response(
+            {"success": False, "message": "دستگاهی برای تمدید انتخاب نشده است."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    base_url = settings.TRACCAR_API_URL
+    url = f"{base_url}/devices/{device_id}"
+
+    headers = {
+        "Authorization": f"Bearer {user.traccar_token}"
+    }
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            return Response({
+                "error": "در دریافت دستگاه خطایی رخ داد.",
+                "details": response.text
+            }, status=response.status_code)
+
+        device = response.json()
+
+        try:
+            package = AccountCharge.objects.get(id = package_id)  
+        except AccountCharge.DoesNotExist:
+            return Response(
+                {"success": False, "message": "پکیج مورد نظر یافت نشد."},
+                status=status.HTTP_404_BAD_REQUEST
+            )
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+    
+    # Generate unique ref_id
+    ref_id = None
+    for _ in range(10):
+        potential_ref_id = randint(100000, 999999)
+        if not Payment.objects.filter(verification_code=potential_ref_id).exists():
+            ref_id = potential_ref_id
+            break
+    
+    if not ref_id:
+        return Response(
+            {"success": False, "message": "خطا در ایجاد شناسه پرداخت."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    try:
+        with transaction.atomic():
+            payment = Payment.objects.create(
+                user = user,
+                unique_id = device.get("uniqueId"),
+                name = device.get("name"),
+                device_id_number = device.get("id"),
+                phone = user.phone,
+                period = package.period,
+                amount = package.credit_cost,
+                verification_code = ref_id,
+                status = 'معلق',
+                account_charge = package
+            )
+            # Check balance
+            if user.credit < package.credit_cost:
+                payment.status = "failed"
+                payment.save()
+                return Response(
+                    {"success": False, "message": "اعتبار حساب برای این تراکنش کافی نیست."},
+                    status=status.HTTP_200_OK
+                )
+            
+            user.credit -= package.credit_cost
+            user.save()
+
+            payment.status = 'موفق'
+            payment.save()
+
+            update_expiration(payment.device_id_number, payment.account_charge.duration_days)
+
+    except Exception as e:
+        logger.error(f"Credit payment failed for user {user.id}: {str(e)}")
+        return Response(
+            {"success": False, "message": f"{str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+    return JsonResponse({"success": True, "ref_id": ref_id, "message": "پرداخت با موفقیت انجام شد."})
 
 class AccountChargeAPIView(APIView):
     def get(self, request):
@@ -58,7 +162,7 @@ class PayAPIView(APIView):
         payment_type = data.get('payment_type')
         account_charge = None
 
-        callback_url = f"{CallbackURL}{device_id_number}"
+        callback_url = f"{settings.CallbackURL}{device_id_number}"
 
         try:
             if payment_type == 'service':
@@ -68,7 +172,7 @@ class PayAPIView(APIView):
 
                 amount = int(service.price)
                 description = service.description
-                callback_url = f"{SecondCallbackURL}"
+                callback_url = f"{settings.SecondCallbackURL}"
 
                 # ✅ ensure these exist, but don't overwrite with 1
                 if not uniqueId or not phone:
@@ -246,7 +350,7 @@ class SendRequestAPIView(APIView):
             "Amount": amount,
             "Description": description,
             "Phone": phone,
-            "CallbackURL": CallbackURL,
+            "CallbackURL": settings.CallbackURL,
         }
         data = json.dumps(data)
         headers = {'content-type': 'application/json', 'content-length': str(len(data))}
@@ -367,3 +471,16 @@ class PaymentListView(generics.ListAPIView):
     queryset = Payment.objects.all().select_related('account_charge').order_by('-timestamp')
     serializer_class = PaymentSerializer
     pagination_class = PaymentPagination
+
+class ResellerPaymentListView(generics.ListAPIView):
+    serializer_class = PaymentSerializer
+    pagination_class = PaymentPagination
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Only return payments for the currently logged-in user
+        return (
+            Payment.objects.filter(user=self.request.user)
+            .select_related('account_charge')
+            .order_by('-timestamp')
+        )
