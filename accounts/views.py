@@ -107,13 +107,48 @@ def validate_and_normalize_phone(phone):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_info(request):
+    """Get current user information"""
     user = request.user
 
-    return Response({
-    'phone': user.phone,
-    'credit': user.credit,
-    'last_login': user.last_login
-    }, status = status.HTTP_200_OK)
+    try:
+        return Response(
+            create_standard_response(True, "User information retrieved successfully.", {
+            'phone': user.phone,
+            'credit': user.credit,
+            'last_login': user.last_login
+            }),
+            status=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        auth_logger.error(f"Error retrieving user info: {e}")
+        return Response(
+            create_standard_response(False, "خطا در دریافت اطلاعات کاربر."),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_balance(request):
+    """Get current user balance"""
+    user = request.user
+    
+    try:
+        return Response(
+            create_standard_response(True, "Balance retrieved successfully.", {
+                "balance": user.credit
+            }),
+            status=status.HTTP_200_OK
+        )
+    
+    except Exception as e:
+        auth_logger.error(f"Error retrieving user balance: {e}")
+        return Response(
+            create_standard_response(False, "خطا در دریافت موجودی."),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
