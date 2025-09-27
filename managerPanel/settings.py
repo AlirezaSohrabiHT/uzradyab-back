@@ -243,6 +243,10 @@ SANDBOX = False
 AUTH_USER_MODEL = 'accounts.User'
 
 
+# CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
+CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
+SecondCallbackURL = 'http://localhost:5173/payment-verify/'
+
 TRACCAR_API_USERNAME = "09156336261"
 TRACCAR_API_PASSWORD = "MTkKppOTdOsj"
 KAVENEGAR_API_KEY="415270574F5349545265306244503252575A44584C52614C69736C6C56437841"
@@ -263,7 +267,7 @@ DATABASES = {
         'NAME': 'traccar1',
         'USER': 'admin_traccar',
         'PASSWORD': '3h4wfv7ue9re',
-        'HOST': '45.139.10.10',
+        'HOST': '45.139.10.175',
         'PORT': '5432',
     },
 }
