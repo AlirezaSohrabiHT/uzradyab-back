@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from traccar_calls.views import UpdateDeviceView
 from django.conf import settings
 from rest_framework import status
+from django.conf import settings
 from services.models import Service
 from accounts.models import User
 from rest_framework.response import Response
@@ -18,7 +19,6 @@ User = get_user_model()
 
 
 def increase_balance(traccar_id, service_id):
-    logger.info(f"asasasas{service_id}")
     try:
         user = User.objects.get(traccar_id=traccar_id)
         service = Service.objects.get(id=service_id)
