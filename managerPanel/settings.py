@@ -28,11 +28,19 @@ LOGGING = {
     # How log records are formatted
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '{levelname} {asctime} {module} {message} {process:d} {thread:d}',
             'style': '{',
         },
         'simple': {
             'format': '{levelname} {message}',
+            'style': '{',
+        },
+        'detailed': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'auth_detailed': {
+            'format': '{levelname} {asctime} {name} {message}',
             'style': '{',
         },
     },
@@ -52,6 +60,15 @@ LOGGING = {
             'backupCount': 5,
             'formatter': 'verbose',
         },
+        'main': {
+            'level' : 'DEBUG',
+            'class' : 'logging.handlers.RotatingFileHandler',
+            'filename' : LOGS_DIR / 'payments.log',
+            'maxBytes' : 1024 * 1024 * 5,
+            'backupCount': 5,
+            'formatter' : 'detailed',
+            'encoding': 'utf-8',
+        },
     },
     # Loggers are the entry point into the logging system
     'loggers': {
@@ -66,6 +83,11 @@ LOGGING = {
             'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': False,
+        },
+        'main' : {
+            'handlers' : ['console', 'main'],
+            'level' : 'DEBUG',
+            'propagate' : False,
         },
     },
 }
@@ -244,8 +266,12 @@ AUTH_USER_MODEL = 'accounts.User'
 
 
 # CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
-CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
-SecondCallbackURL = 'http://localhost:5173/payment-verify/'
+# CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
+# SecondCallbackURL = 'http://localhost:5173/payment-verify/'
+# CALLBACK_URL = "http://localhost:3037/payment-verify/"
+CALLBACK_URL = "https://app.uzradyab.ir/payment-verify/"
+# SECOND_CALLBACK_URL = "http://localhost:5173/payment-verify/"
+SECOND_CALLBACK_URL = "https://admin.uzradyab.ir/payment-verify/"
 
 TRACCAR_API_USERNAME = "09156336261"
 TRACCAR_API_PASSWORD = "MTkKppOTdOsj"

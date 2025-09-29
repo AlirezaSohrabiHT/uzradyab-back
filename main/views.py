@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from .models import AccountCharge , Payment , UserSettings
 from .serializers import PaymentSerializer , AccountChargeSerializer , UserSettingsSerializer
 import time
+from rest_framework.authentication import TokenAuthentication
 from decimal import Decimal
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
@@ -20,6 +21,7 @@ from django.db import transaction
 import logging
 
 logger = logging.getLogger('django')
+mainLogger = logging.getLogger('main')
 
 #? sandbox merchant 
 if settings.SANDBOX:
@@ -45,16 +47,21 @@ phone = 'YOUR_PHONE_NUMBER'  # Optional
 @permission_classes([IsAuthenticated])
 def buy_package(request):
     user = request.user
+
+    mainLogger.info(f"User {user} request to buy a package")
+
     device_id = request.data.get('deviceId')
     package_id = request.data.get('packageId')
 
     if not package_id:
+        mainLogger.debug(f"package {package_id} not found")
         return Response(
             {"success": False, "message": "سرویس مورد نظر را انتخاب کنید."},
             status=status.HTTP_400_BAD_REQUEST
         )
     
     if not device_id:
+        mainLogger.debug(f"device {device_id} not found")
         return Response(
             {"success": False, "message": "دستگاهی برای تمدید انتخاب نشده است."},
             status=status.HTTP_400_BAD_REQUEST
@@ -69,6 +76,7 @@ def buy_package(request):
     try:
         response = requests.get(url, headers=headers)
         if response.status_code != 200:
+            mainLogger.debug(f"An error occured while retrive device from traccar db")
             return Response({
                 "error": "در دریافت دستگاه خطایی رخ داد.",
                 "details": response.text
@@ -96,6 +104,7 @@ def buy_package(request):
             break
     
     if not ref_id:
+        mainLogger.debug(f"An error occured during creating ref ID")
         return Response(
             {"success": False, "message": "خطا در ایجاد شناسه پرداخت."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -103,6 +112,7 @@ def buy_package(request):
     
     try:
         with transaction.atomic():
+            mainLogger.info(f"The new purchase is in progress")
             payment = Payment.objects.create(
                 user = user,
                 unique_id = device.get("uniqueId"),
@@ -113,12 +123,14 @@ def buy_package(request):
                 amount = package.credit_cost,
                 verification_code = ref_id,
                 status = 'معلق',
-                account_charge = package
+                account_charge = package,
+                method = 'credit'
             )
             # Check balance
             if user.credit < package.credit_cost:
                 payment.status = "failed"
                 payment.save()
+                mainLogger.debug(f"Not enough credit")
                 return Response(
                     {"success": False, "message": "اعتبار حساب برای این تراکنش کافی نیست."},
                     status=status.HTTP_200_OK
@@ -133,7 +145,7 @@ def buy_package(request):
             update_expiration(payment.device_id_number, payment.account_charge.duration_days)
 
     except Exception as e:
-        logger.error(f"Credit payment failed for user {user.id}: {str(e)}")
+        mainLogger.error(f"Credit payment failed for user {user.id}: {str(e)}")
         return Response(
             {"success": False, "message": f"{str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -150,7 +162,10 @@ class AccountChargeAPIView(APIView):
         return Response(serializer.data)
 
 class PayAPIView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
+        mainLogger.info(f"The new payment is in progress")
         data = request.data
         amount = data.get('amount')
         period = data.get('period')
@@ -162,20 +177,22 @@ class PayAPIView(APIView):
         payment_type = data.get('payment_type')
         account_charge = None
 
-        callback_url = f"{settings.CallbackURL}{device_id_number}"
+        callback_url = f"{settings.CALLBACK_URL}{device_id_number}"
 
         try:
             if payment_type == 'service':
                 service = Service.objects.filter(price=amount).first()
                 if not service:
+                    mainLogger.debug(f"Invalid service plan")
                     return Response({'error': 'Invalid service plan'}, status=400)
 
                 amount = int(service.price)
                 description = service.description
-                callback_url = f"{settings.SecondCallbackURL}"
+                callback_url = f"{settings.SECOND_CALLBACK_URL}"
 
                 # ✅ ensure these exist, but don't overwrite with 1
                 if not uniqueId or not phone:
+                    mainLogger.debug(f"Missing required fields uniqueId {uniqueId} phone {phone} device_id_number {device_id_number}")
                     return Response({'error': 'Missing required fields (uniqueId, phone, device_id_number)'}, status=400)
 
 
@@ -184,14 +201,16 @@ class PayAPIView(APIView):
                     amount=amount, period=period
                 ).first()
                 if not account_charge:
+                    mainLogger.debug(f"Invalid account charge plan")
                     return Response({'error': 'Invalid account charge plan'}, status=400)
 
                 amount = int(account_charge.amount)  # ✅ always use DB value
                 description = account_charge.description
             
-            
+            mainLogger.info(f"The new payment create for user {request.user}")
             # Create Payment
             payment = Payment.objects.create(
+                user=request.user if request.user.is_authenticated else None,
                 unique_id=uniqueId,
                 name=name,
                 device_id_number=device_id_number,
@@ -201,6 +220,7 @@ class PayAPIView(APIView):
                 status="معلق",
                 account_charge=account_charge or None,
             )
+
             # Send to Zarinpal
             response_data = send_request_logic(
                 amount,
@@ -210,15 +230,19 @@ class PayAPIView(APIView):
                 payment.id,
             )
 
+            mainLogger.info(f"The response data for payment {payment.id} is: {response_data}")
+
             if response_data['status']:
                 return Response({'url': response_data['url']})
             else:
+                mainLogger.debug(f"Payment initiation failed - 'details': {response_data.get('code')}")
                 return Response(
                     {'error': 'Payment initiation failed', 'details': response_data.get('code')},
                     status=500
                 )
 
         except Exception as e:
+            mainLogger.error(f"Error processing payment: {str(e)}")
             return Response({'error': f"Error processing payment: {str(e)}"}, status=500)
 
 def send_request_logic(amount, description, phone, callback_url, unique_id):
@@ -350,7 +374,7 @@ class SendRequestAPIView(APIView):
             "Amount": amount,
             "Description": description,
             "Phone": phone,
-            "CallbackURL": settings.CallbackURL,
+            "CallbackURL": settings.CALLBACK_URL,
         }
         data = json.dumps(data)
         headers = {'content-type': 'application/json', 'content-length': str(len(data))}

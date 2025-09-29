@@ -19,5 +19,5 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'unique_id', 'name', 'device_id_number', 'phone', 
             'period', 'amount', 'payment_code', 'verification_code', 
-            'status', 'timestamp', 'account_charge'
+            'status', 'timestamp', 'account_charge', 'method'
         ]
