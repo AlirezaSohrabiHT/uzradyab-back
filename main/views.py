@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from .models import AccountCharge , Payment , UserSettings
 from .serializers import PaymentSerializer , AccountChargeSerializer , UserSettingsSerializer
 import time
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.authentication import TokenAuthentication, BaseAuthentication
 from decimal import Decimal
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
@@ -41,6 +41,9 @@ phone = 'YOUR_PHONE_NUMBER'  # Optional
 # CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
 # CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
 # SecondCallbackURL = 'http://localhost:5173/payment-verify/'
+
+
+
 
 
 @api_view(['POST'])
@@ -162,8 +165,8 @@ class AccountChargeAPIView(APIView):
         return Response(serializer.data)
 
 class PayAPIView(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    # authentication_classes = [TokenAuthentication]
+    # permission_classes = [IsAuthenticated]
     def post(self, request):
         mainLogger.info(f"The new payment is in progress")
         data = request.data
