@@ -6,7 +6,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import AccountCharge , Payment , UserSettings
+from accounts.models import User
 from .serializers import PaymentSerializer , AccountChargeSerializer , UserSettingsSerializer
+from accounts.serializers import UserSerializer
 import time
 from rest_framework.authentication import TokenAuthentication, BaseAuthentication
 from decimal import Decimal
@@ -41,8 +43,6 @@ phone = 'YOUR_PHONE_NUMBER'  # Optional
 # CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
 # CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
 # SecondCallbackURL = 'http://localhost:5173/payment-verify/'
-
-
 
 
 
@@ -156,6 +156,14 @@ def buy_package(request):
 
     return JsonResponse({"success": True, "ref_id": ref_id, "message": "پرداخت با موفقیت انجام شد."})
 
+
+class ResellersListView(APIView):
+    def get(self, request):
+        settings = User.objects.filter(is_staff = True, is_superuser = False)
+        serializer = UserSerializer(settings, many=True)
+        return Response(serializer.data)
+
+
 class AccountChargeAPIView(APIView):
     def get(self, request):
         print("AccountChargeAPIView GET request received")
@@ -178,6 +186,7 @@ class PayAPIView(APIView):
         device_id_number = data.get('id')
         accountcharges_id = data.get('accountcharges_id')
         payment_type = data.get('payment_type')
+        method = data.get('method')
         account_charge = None
 
         callback_url = f"{settings.CALLBACK_URL}{device_id_number}"
@@ -194,9 +203,9 @@ class PayAPIView(APIView):
                 callback_url = f"{settings.SECOND_CALLBACK_URL}"
 
                 # ✅ ensure these exist, but don't overwrite with 1
-                if not uniqueId or not phone:
-                    mainLogger.debug(f"Missing required fields uniqueId {uniqueId} phone {phone} device_id_number {device_id_number}")
-                    return Response({'error': 'Missing required fields (uniqueId, phone, device_id_number)'}, status=400)
+                # if not uniqueId or not phone:
+                #     mainLogger.debug(f"Missing required fields uniqueId {uniqueId} phone {phone} device_id_number {device_id_number}")
+                #     return Response({'error': 'Missing required fields (uniqueId, phone, device_id_number)'}, status=400)
 
 
             else:  # account charge
@@ -215,20 +224,21 @@ class PayAPIView(APIView):
             payment = Payment.objects.create(
                 user=request.user if request.user.is_authenticated else None,
                 unique_id=uniqueId,
-                name=name,
+                name= request.user.full_name if not name else name,
                 device_id_number=device_id_number,
-                phone=phone,
+                phone= request.user.phone if not phone else phone,
                 period=period,
                 amount=amount,
                 status="معلق",
                 account_charge=account_charge or None,
+                method = method
             )
 
             # Send to Zarinpal
             response_data = send_request_logic(
                 amount,
                 description,
-                phone,
+                request.user.phone if not phone else phone,
                 callback_url,
                 payment.id,
             )
@@ -507,7 +517,7 @@ class ResellerPaymentListView(generics.ListAPIView):
     def get_queryset(self):
         # Only return payments for the currently logged-in user
         return (
-            Payment.objects.filter(user=self.request.user)
+            Payment.objects.filter(user=self.request.user, method= 'gateway')
             .select_related('account_charge')
             .order_by('-timestamp')
         )
