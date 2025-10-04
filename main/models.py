@@ -9,8 +9,8 @@ class Payment(models.Model):
     ]
 
     user = models.ForeignKey('accounts.User', on_delete = models.CASCADE, null = True, blank = True)
-    unique_id = models.CharField(max_length=100, verbose_name="شناسه یکتا", default="")
-    name = models.CharField(max_length=100, verbose_name="نام", default="")
+    unique_id = models.CharField(max_length=100, verbose_name="شناسه یکتا", null = True, blank = True)
+    name = models.CharField(max_length=100, verbose_name="نام", null = True, blank = True)
     device_id_number = models.CharField(max_length=100, verbose_name="شناسه دستگاه", default="")
     phone = models.CharField(max_length=50, verbose_name="شماره تلفن", default="")
     period = models.CharField(max_length=100, verbose_name="مدت زمان", default="")
@@ -21,7 +21,7 @@ class Payment(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True, verbose_name="زمان")
     account_charge = models.ForeignKey('AccountCharge', on_delete=models.CASCADE, related_name='payments', verbose_name="شارژ حساب", null=True, blank=True)
     imei = models.CharField(max_length = 50, verbose_name="سریال دستگاه", null = True, blank = True)
-    method = models.CharField(max_length=10, choices=PAYMENT_METHOD_CHOICES, default='gateway', verbose_name='روش پرداخت')
+    method = models.CharField(max_length=10, choices=PAYMENT_METHOD_CHOICES, verbose_name='روش پرداخت', null = True, blank = True)
 
     def __str__(self):
         return f"Payment of {self.amount} at {self.timestamp}"
