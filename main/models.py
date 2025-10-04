@@ -11,7 +11,7 @@ class Payment(models.Model):
     user = models.ForeignKey('accounts.User', on_delete = models.CASCADE, null = True, blank = True)
     unique_id = models.CharField(max_length=100, verbose_name="شناسه یکتا", null = True, blank = True)
     name = models.CharField(max_length=100, verbose_name="نام", null = True, blank = True)
-    device_id_number = models.CharField(max_length=100, verbose_name="شناسه دستگاه", default="")
+    device_id_number = models.CharField(max_length=100, verbose_name="شناسه دستگاه", null = True, blank = True)
     phone = models.CharField(max_length=50, verbose_name="شماره تلفن", default="")
     period = models.CharField(max_length=100, verbose_name="مدت زمان", default="")
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="مقدار پرداخت", default=None)
