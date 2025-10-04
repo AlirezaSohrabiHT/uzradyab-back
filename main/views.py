@@ -117,7 +117,7 @@ def buy_package(request):
         with transaction.atomic():
             mainLogger.info(f"The new purchase is in progress")
             payment = Payment.objects.create(
-                user = user,
+                user=request.user if request.user.is_authenticated else None,
                 unique_id = device.get("uniqueId"),
                 name = device.get("name"),
                 device_id_number = device.get("id"),
@@ -231,7 +231,7 @@ class PayAPIView(APIView):
                 amount=amount,
                 status="معلق",
                 account_charge=account_charge or None,
-                method = method
+                method = method or 'gateway'
             )
 
             # Send to Zarinpal
@@ -505,7 +505,7 @@ class PaymentPagination(PageNumberPagination):
     max_page_size = 100
 
 class PaymentListView(generics.ListAPIView):
-    queryset = Payment.objects.all().select_related('account_charge').order_by('-timestamp')
+    queryset = Payment.objects.exclude(method = 'credit').select_related('account_charge').order_by('-timestamp')
     serializer_class = PaymentSerializer
     pagination_class = PaymentPagination
 
@@ -517,7 +517,12 @@ class ResellerPaymentListView(generics.ListAPIView):
     def get_queryset(self):
         # Only return payments for the currently logged-in user
         return (
-            Payment.objects.filter(user=self.request.user, method= 'gateway')
+            Payment.objects.filter(user=self.request.user)
             .select_related('account_charge')
             .order_by('-timestamp')
         )
+    
+class ResellerTransactionsListView(generics.ListAPIView):
+    queryset = Payment.objects.filter(method = 'credit').select_related('account_charge').order_by('-timestamp')
+    serializer_class = PaymentSerializer
+    pagination_class = PaymentPagination
