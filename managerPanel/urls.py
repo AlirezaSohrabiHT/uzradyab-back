@@ -19,7 +19,7 @@ from django.urls import path, include
 from main.views import PayAPIView,  VerifyAPIView , AccountChargeAPIView , SendRequestAPIView,\
       PaymentListView, ResellerPaymentListView, buy_package
 from django.urls import path , include
-from main.views import PayAPIView, VerifyAPIView, AccountChargeAPIView, SendRequestAPIView
+from main.views import PayAPIView, VerifyAPIView, AccountChargeAPIView, SendRequestAPIView, ResellersListView
 from uzradyabHandler.views import ExpiredDevicesView 
 from health.views import health_check
 
@@ -31,6 +31,7 @@ urlpatterns = [
     path('verify/', VerifyAPIView.as_view(), name='verify'),
     path('payments/', PaymentListView.as_view(), name='payment-list'),
     path('reseller-payments/', ResellerPaymentListView.as_view(), name='ResellerPaymentListView-list'),
+    path('resellers/', ResellersListView.as_view(), name='ResellersListView-list'),
     path('buy-package/', buy_package, name='buy_package'),
     path('api/traccar/', include('traccar_calls.urls')),
     path('api/services/', include('services.urls')),
