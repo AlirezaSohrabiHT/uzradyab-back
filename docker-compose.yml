@@ -34,15 +34,22 @@ services:
     restart: unless-stopped
     network_mode: host   # 👈 if you want direct host networking like web
 
+
   celery-beat:
     build:
       context: .
-    command: celery -A managerPanel beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    # 1. REMOVE the --scheduler flag
+    # 2. ADD the -s flag to point to a persistent file location
+    command: celery -A managerPanel beat -l info -s /app/celerybeat-schedule/schedule
     volumes:
       - .:/app
       - ./logs:/app/logs
+      - celery_beat_schedule:/app/celerybeat-schedule
     environment:
       CELERY_BROKER_URL: redis://127.0.0.1:6379/0
       CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/0
     restart: unless-stopped
     network_mode: host
+
+volumes:
+  celery_beat_schedule:

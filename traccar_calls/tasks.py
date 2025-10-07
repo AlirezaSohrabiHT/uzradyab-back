@@ -8,3 +8,4 @@ def run_check_expired_devices():
 @shared_task
 def run_send_device_expiry_sms():
     call_command("send_device_expiry_sms")
+

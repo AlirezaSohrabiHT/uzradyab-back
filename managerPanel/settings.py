@@ -293,7 +293,7 @@ DATABASES = {
         'NAME': 'traccar1',
         'USER': 'admin_traccar',
         'PASSWORD': '3h4wfv7ue9re',
-        'HOST': '45.139.10.175',
+        'HOST': '45.139.10.10',
         'PORT': '5432',
     },
 }
