@@ -115,7 +115,9 @@ def user_info(request):
             create_standard_response(True, "User information retrieved successfully.", {
             'phone': user.phone,
             'credit': user.credit,
-            'last_login': user.last_login
+            'last_login': user.last_login,
+            'firstName': user.first_name,
+            'lastName': user.last_name
             }),
             status=status.HTTP_200_OK
         )

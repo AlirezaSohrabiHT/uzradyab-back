@@ -6,9 +6,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import AccountCharge , Payment , UserSettings
+from accounts.models import User
 from .serializers import PaymentSerializer , AccountChargeSerializer , UserSettingsSerializer
+from accounts.serializers import UserSerializer
 import time
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.authentication import TokenAuthentication, BaseAuthentication
 from decimal import Decimal
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
@@ -41,6 +43,7 @@ phone = 'YOUR_PHONE_NUMBER'  # Optional
 # CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
 # CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
 # SecondCallbackURL = 'http://localhost:5173/payment-verify/'
+
 
 
 @api_view(['POST'])
@@ -114,7 +117,7 @@ def buy_package(request):
         with transaction.atomic():
             mainLogger.info(f"The new purchase is in progress")
             payment = Payment.objects.create(
-                user = user,
+                user=request.user if request.user.is_authenticated else None,
                 unique_id = device.get("uniqueId"),
                 name = device.get("name"),
                 device_id_number = device.get("id"),
@@ -153,6 +156,14 @@ def buy_package(request):
 
     return JsonResponse({"success": True, "ref_id": ref_id, "message": "پرداخت با موفقیت انجام شد."})
 
+
+class ResellersListView(APIView):
+    def get(self, request):
+        settings = User.objects.filter(is_staff = True, is_superuser = False)
+        serializer = UserSerializer(settings, many=True)
+        return Response(serializer.data)
+
+
 class AccountChargeAPIView(APIView):
     def get(self, request):
         print("AccountChargeAPIView GET request received")
@@ -162,8 +173,8 @@ class AccountChargeAPIView(APIView):
         return Response(serializer.data)
 
 class PayAPIView(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    # authentication_classes = [TokenAuthentication]
+    # permission_classes = [IsAuthenticated]
     def post(self, request):
         mainLogger.info(f"The new payment is in progress")
         data = request.data
@@ -175,6 +186,7 @@ class PayAPIView(APIView):
         device_id_number = data.get('id')
         accountcharges_id = data.get('accountcharges_id')
         payment_type = data.get('payment_type')
+        method = data.get('method')
         account_charge = None
 
         callback_url = f"{settings.CALLBACK_URL}{device_id_number}"
@@ -191,9 +203,9 @@ class PayAPIView(APIView):
                 callback_url = f"{settings.SECOND_CALLBACK_URL}"
 
                 # ✅ ensure these exist, but don't overwrite with 1
-                if not uniqueId or not phone:
-                    mainLogger.debug(f"Missing required fields uniqueId {uniqueId} phone {phone} device_id_number {device_id_number}")
-                    return Response({'error': 'Missing required fields (uniqueId, phone, device_id_number)'}, status=400)
+                # if not uniqueId or not phone:
+                #     mainLogger.debug(f"Missing required fields uniqueId {uniqueId} phone {phone} device_id_number {device_id_number}")
+                #     return Response({'error': 'Missing required fields (uniqueId, phone, device_id_number)'}, status=400)
 
 
             else:  # account charge
@@ -212,20 +224,21 @@ class PayAPIView(APIView):
             payment = Payment.objects.create(
                 user=request.user if request.user.is_authenticated else None,
                 unique_id=uniqueId,
-                name=name,
+                name= request.user.full_name if not name else name,
                 device_id_number=device_id_number,
-                phone=phone,
+                phone= request.user.phone if not phone else phone,
                 period=period,
                 amount=amount,
                 status="معلق",
                 account_charge=account_charge or None,
+                method = method or 'gateway'
             )
 
             # Send to Zarinpal
             response_data = send_request_logic(
                 amount,
                 description,
-                phone,
+                request.user.phone if not phone else phone,
                 callback_url,
                 payment.id,
             )
@@ -492,7 +505,7 @@ class PaymentPagination(PageNumberPagination):
     max_page_size = 100
 
 class PaymentListView(generics.ListAPIView):
-    queryset = Payment.objects.all().select_related('account_charge').order_by('-timestamp')
+    queryset = Payment.objects.exclude(method = 'credit').select_related('account_charge').order_by('-timestamp')
     serializer_class = PaymentSerializer
     pagination_class = PaymentPagination
 
@@ -508,3 +521,8 @@ class ResellerPaymentListView(generics.ListAPIView):
             .select_related('account_charge')
             .order_by('-timestamp')
         )
+    
+class ResellerTransactionsListView(generics.ListAPIView):
+    queryset = Payment.objects.filter(method = 'credit').select_related('account_charge').order_by('-timestamp')
+    serializer_class = PaymentSerializer
+    pagination_class = PaymentPagination
