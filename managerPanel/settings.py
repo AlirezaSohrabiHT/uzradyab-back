@@ -285,7 +285,7 @@ DATABASES = {
         'NAME': 'uzradyab',
         'USER': 'uzradmin',
         'PASSWORD': 'T_3gBf1YDqQN]1o8',
-        'HOST': '45.139.10.10',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
     },
     'device_user_db': {
@@ -293,10 +293,11 @@ DATABASES = {
         'NAME': 'traccar1',
         'USER': 'admin_traccar',
         'PASSWORD': '3h4wfv7ue9re',
-        'HOST': '45.139.10.10',
+        'HOST': '45.139.10.175',
         'PORT': '5432',
     },
 }
+
 
 CELERY_BEAT_SCHEDULE = {
     "check-expired-devices-every-6h": {

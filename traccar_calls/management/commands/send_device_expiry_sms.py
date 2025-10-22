@@ -236,12 +236,12 @@ class Command(BaseCommand):
             Fixed to handle spaces in token parameter
             """
             try:
-                phone_number = expired_device.get_phone_number()
-                
+                phone_number = (expired_device.user_phone or '').strip()
+
                 if not phone_number:
                     self.stdout.write(
                         self.style.WARNING(
-                            f"No phone number for user {expired_device.user_name} "
+                            f"No **user** phone for user {expired_device.user_name} "
                             f"device {expired_device.device_name}"
                         )
                     )
