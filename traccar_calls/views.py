@@ -14,7 +14,10 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from django.utils.timezone import make_aware
 from rest_framework import generics
-logger = logging.getLogger(__name__)
+import requests
+from rest_framework.response import Response
+
+logger = logging.getLogger('main')
 
 class TraccarSessionView(APIView):
     permission_classes = [IsAuthenticated]
@@ -807,3 +810,206 @@ class FetchPositionsTimeRangeView(APIView):
                     'to': None,
                     'count': 0
                 }
+
+from requests.auth import HTTPBasicAuth
+import logging
+from rest_framework.response import Response
+from django.conf import settings
+import requests
+
+logger = logging.getLogger(__name__)
+
+class HandleUserDeviceLinkView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        data = request.data
+        device_data = data.get("device")
+        user_data = data.get("user")
+
+        if not device_data or not user_data:
+            return Response({"error": "Both 'device' and 'user' data are required."}, status=400)
+
+        # Step 1: Check if user exists
+        user_exists_response = self.check_user_exists(request, user_data["phone"])
+        if not user_exists_response["exists"]:
+            # Step 2: If user does not exist, create the user
+            create_user_response = self.create_user(request, user_data)
+            if create_user_response.status_code != 200:
+                return create_user_response
+
+            user_data = create_user_response.data  # Update with newly created user data
+
+        # Step 3: Check if device exists
+        device_exists_response = self.check_device_exists(request, device_data["uniqueId"])
+        
+        if device_exists_response["exists"]:
+            return Response({"error": f"Device with uniqueId '{device_data['uniqueId']}' already exists."}, status=409)
+
+        # Step 4: If device doesn't exist, create the device
+        create_device_response = self.create_device(request, device_data)
+        if create_device_response.status_code != 200:
+            return create_device_response
+
+        device_data = create_device_response.data  # Update with newly created device data
+
+        # Step 5: Link user and device
+        link_response = self.link_user_to_device(request, user_data["id"], device_data["id"])
+        if link_response.status_code != 200:
+            return link_response
+
+        # Step 6: Send session request (optional)
+        session_response = self.send_session_request(request, user)
+        if session_response.status_code != 200:
+            return session_response
+
+        return Response({
+            "message": "User and device created and linked successfully.",
+            "user": user_data,
+            "device": device_data
+        }, status=201)
+
+    def check_user_exists(self, request, phone):
+        url = f"{settings.TRACCAR_API_URL}/users"
+        try:
+            response = requests.get(
+                url,
+                params={"phone": phone},
+                auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
+                timeout=30
+            )
+            if response.status_code == 200:
+                try:
+                    response_data = response.json()  # Parse JSON response
+                    
+                    # If the response is a list, check if any users match the phone
+                    if isinstance(response_data, list):
+                        user_exists = any(user.get('phone') == phone for user in response_data)
+                        return {"exists": user_exists}
+                    
+                    # If the response is a dictionary, directly check the user
+                    elif isinstance(response_data, dict):
+                        # If the response is a single user, check if the phone matches
+                        if response_data.get('phone') == phone:
+                            return {"exists": True}
+                        return {"exists": False}
+                    
+                    # If the response structure is unexpected, log and return False
+                    else:
+                        logger.error(f"Unexpected response structure: {response_data}")
+                        return {"exists": False, "error": "Unexpected response format."}
+                    
+                except ValueError:
+                    logger.error(f"Invalid JSON response for user check: {response.text}")
+                    return {"exists": False, "error": "Invalid JSON response from Traccar."}
+            else:
+                logger.error(f"Failed to check user existence: {response.status_code} - {response.text}")
+                return {"exists": False, "error": f"Error checking user: {response.text}"}
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed while checking user: {str(e)}")
+            return {"exists": False, "error": str(e)}
+    
+
+    def create_user(self, request, user_data):
+        url = f"{settings.TRACCAR_API_URL}/users"
+        try:
+            response = requests.post(
+                url,
+                json=user_data,
+                auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
+                timeout=30
+            )
+            if response.status_code == 200:
+                return response  # Return the full response object for further handling
+            else:
+                logger.error(f"Failed to create user: {response.status_code} - {response.text}")
+                return Response({"error": f"Failed to create user: {response.text}"}, status=response.status_code)
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed while creating user: {str(e)}")
+            return Response({"error": str(e)}, status=500)
+
+    def check_device_exists(self, request, unique_id):
+        url = f"{settings.TRACCAR_API_URL}/devices"
+        try:
+            response = requests.get(
+                url,
+                params={"uniqueId": unique_id},
+                auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
+                timeout=30
+            )
+            if response.status_code == 200:
+                try:
+                    logger.info(response.text)
+                    return response.json()  # Parse JSON response
+                except ValueError:
+                    logger.error(f"Invalid JSON response for device check: {response.text}")
+                    return {"exists": False, "error": "Invalid JSON response from Traccar."}
+            else:
+                logger.error(f"Failed to check device existence: {response.status_code} - {response.text}")
+                return {"exists": False, "error": f"Error checking device: {response.text}"}
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed while checking device: {str(e)}")
+            return {"exists": False, "error": str(e)}
+
+    def create_device(self, request, device_data):
+        url = f"{settings.TRACCAR_API_URL}/devices"
+        try:
+            response = requests.post(
+                url,
+                json=device_data,
+                auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
+                timeout=30
+            )
+            if response.status_code == 200:
+                return response  # Return the full response object for further handling
+            else:
+                logger.error(f"Failed to create device: {response.status_code} - {response.text}")
+                return Response({"error": f"Failed to create device: {response.text}"}, status=response.status_code)
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed while creating device: {str(e)}")
+            return Response({"error": str(e)}, status=500)
+
+    def link_user_to_device(self, request, user_id, device_id):
+        url = f"{settings.TRACCAR_API_URL}/permissions"
+        payload = {
+            "userId": user_id,
+            "deviceId": device_id
+        }
+        try:
+            response = requests.post(
+                url,
+                json=payload,
+                auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
+                timeout=30
+            )
+            if response.status_code == 200:
+                return response  # Return the full response object for further handling
+            else:
+                logger.error(f"Failed to link user to device: {response.status_code} - {response.text}")
+                return Response({"error": f"Failed to link user and device: {response.text}"}, status=response.status_code)
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed while linking user to device: {str(e)}")
+            return Response({"error": str(e)}, status=500)
+
+    def send_session_request(self, request, user):
+        url = f"{settings.TRACCAR_API_URL}/session"
+        payload = {
+            "email": user.phone,
+            "password": user.raw_password
+        }
+        try:
+            response = requests.post(
+                url,
+                json=payload,
+                auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
+                timeout=30
+            )
+            if response.status_code == 200:
+                return response  # Return the full response object for further handling
+            else:
+                logger.error(f"Failed to start session: {response.status_code} - {response.text}")
+                return Response({"error": f"Failed to start session: {response.text}"}, status=response.status_code)
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed while starting session: {str(e)}")
+            return Response({"error": str(e)}, status=500)
