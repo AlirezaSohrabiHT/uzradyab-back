@@ -819,197 +819,259 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+class TraccarDuplicateDeviceError(Exception):
+    """Raised when Traccar reports duplicate device uniqueId."""
+    pass
+
+
+class TraccarDuplicateUserError(Exception):
+    """Raised when Traccar reports duplicate user (email/phone/username)."""
+    pass
+
+
 class HandleUserDeviceLinkView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        user = request.user
+        """
+        Expected body:
+        {
+          "user": {
+            "name": "...",
+            "email": "...",
+            "phone": "...",
+            "password": "..."
+          },
+          "device": {
+            "name": "...",
+            "uniqueId": "...",
+            "phone": "..."
+          },
+          "confirm": true/false   # optional
+        }
+        """
         data = request.data
-        device_data = data.get("device")
-        user_data = data.get("user")
+        device_payload = data.get("device") or {}
+        user_payload = data.get("user") or {}
+        confirm = bool(data.get("confirm"))
 
-        if not device_data or not user_data:
-            return Response({"error": "Both 'device' and 'user' data are required."}, status=400)
-
-        # Step 1: Check if user exists
-        user_exists_response = self.check_user_exists(request, user_data["phone"])
-        if not user_exists_response["exists"]:
-            # Step 2: If user does not exist, create the user
-            create_user_response = self.create_user(request, user_data)
-            if create_user_response.status_code != 200:
-                return create_user_response
-
-            user_data = create_user_response.data  # Update with newly created user data
-
-        # Step 3: Check if device exists
-        device_exists_response = self.check_device_exists(request, device_data["uniqueId"])
-        
-        if device_exists_response["exists"]:
-            return Response({"error": f"Device with uniqueId '{device_data['uniqueId']}' already exists."}, status=409)
-
-        # Step 4: If device doesn't exist, create the device
-        create_device_response = self.create_device(request, device_data)
-        if create_device_response.status_code != 200:
-            return create_device_response
-
-        device_data = create_device_response.data  # Update with newly created device data
-
-        # Step 5: Link user and device
-        link_response = self.link_user_to_device(request, user_data["id"], device_data["id"])
-        if link_response.status_code != 200:
-            return link_response
-
-        # Step 6: Send session request (optional)
-        session_response = self.send_session_request(request, user)
-        if session_response.status_code != 200:
-            return session_response
-
-        return Response({
-            "message": "User and device created and linked successfully.",
-            "user": user_data,
-            "device": device_data
-        }, status=201)
-
-    def check_user_exists(self, request, phone):
-        url = f"{settings.TRACCAR_API_URL}/users"
-        try:
-            response = requests.get(
-                url,
-                params={"phone": phone},
-                auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
-                timeout=30
+        if not device_payload or not user_payload:
+            return Response(
+                {"error": "Both 'device' and 'user' data are required."},
+                status=400
             )
-            if response.status_code == 200:
-                try:
-                    response_data = response.json()  # Parse JSON response
-                    
-                    # If the response is a list, check if any users match the phone
-                    if isinstance(response_data, list):
-                        user_exists = any(user.get('phone') == phone for user in response_data)
-                        return {"exists": user_exists}
-                    
-                    # If the response is a dictionary, directly check the user
-                    elif isinstance(response_data, dict):
-                        # If the response is a single user, check if the phone matches
-                        if response_data.get('phone') == phone:
-                            return {"exists": True}
-                        return {"exists": False}
-                    
-                    # If the response structure is unexpected, log and return False
-                    else:
-                        logger.error(f"Unexpected response structure: {response_data}")
-                        return {"exists": False, "error": "Unexpected response format."}
-                    
-                except ValueError:
-                    logger.error(f"Invalid JSON response for user check: {response.text}")
-                    return {"exists": False, "error": "Invalid JSON response from Traccar."}
-            else:
-                logger.error(f"Failed to check user existence: {response.status_code} - {response.text}")
-                return {"exists": False, "error": f"Error checking user: {response.text}"}
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed while checking user: {str(e)}")
-            return {"exists": False, "error": str(e)}
-    
 
-    def create_user(self, request, user_data):
-        url = f"{settings.TRACCAR_API_URL}/users"
+        phone = user_payload.get("phone")
+        unique_id = device_payload.get("uniqueId")
+
+        if not phone:
+            return Response({"error": "user.phone is required"}, status=400)
+        if not unique_id:
+            return Response({"error": "device.uniqueId is required"}, status=400)
+
         try:
-            response = requests.post(
-                url,
-                json=user_data,
-                auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
-                timeout=30
+            # 1) Find or create user (with confirmation step if already exists)
+            user_obj = self._find_user_by_phone(phone)
+
+            if user_obj and not confirm:
+                # User exists, ask frontend to confirm before proceeding
+                short_user = {
+                    "id": user_obj.get("id"),
+                    "name": user_obj.get("name"),
+                    "email": user_obj.get("email"),
+                    "phone": user_obj.get("phone"),
+                }
+                return Response(
+                    {
+                        "status": "user_exists",
+                        "message": "User already exists in Traccar. Confirm to create and link device.",
+                        "user": short_user,
+                    },
+                    status=200,
+                )
+
+            if not user_obj:
+                # Create new user in Traccar
+                user_obj = self._create_traccar_user(user_payload)
+
+            # 2) Check if device already exists
+            device_obj = self._find_device_by_unique_id(unique_id)
+            if device_obj:
+                # Device already exists – return clean message
+                return Response(
+                    {
+                        "status": "device_exists",
+                        "message": "دستگاه به این سریال در سامانه موجود است.",
+                        "device": device_obj,
+                    },
+                    status=409,
+                )
+
+            device_payload["expirationTime"] = (
+                datetime.utcnow() + timedelta(days=365)
+            ).strftime("%Y-%m-%dT%H:%M:%S.000+00:00")
+            
+            # 3) Create device in Traccar
+            try:
+                device_obj = self._create_traccar_device(device_payload)
+            except TraccarDuplicateDeviceError:
+                # Race condition: device just created; fetch and report nicely
+                existing = self._find_device_by_unique_id(unique_id)
+                return Response(
+                    {
+                        "status": "device_exists",
+                        "message": "Device with this uniqueId already exists in Traccar.",
+                        "device": existing,
+                    },
+                    status=409,
+                )
+
+            # 4) Link user and device
+            self._link_user_device(user_obj["id"], device_obj["id"])
+
+
+            # 4b) Also link device to the reseller (current Django user)
+            reseller_phone = getattr(request.user, "phone", None)
+            if reseller_phone:
+                reseller_user = self._find_user_by_phone(reseller_phone)
+                if reseller_user:
+                    try:
+                        self._link_user_device(reseller_user["id"], device_obj["id"])
+                    except Exception as e:
+                        logger.warning(
+                            "Failed to link device %s to reseller %s: %s",
+                            device_obj.get("id"),
+                            reseller_user.get("id"),
+                            e,
+                        )
+                        
+            return Response(
+                {
+                    "status": "ok",
+                    "message": "User and device created and linked successfully.",
+                    "user": user_obj,
+                    "device": device_obj,
+                },
+                status=201,
             )
-            if response.status_code == 200:
-                return response  # Return the full response object for further handling
-            else:
-                logger.error(f"Failed to create user: {response.status_code} - {response.text}")
-                return Response({"error": f"Failed to create user: {response.text}"}, status=response.status_code)
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed while creating user: {str(e)}")
+
+        except TraccarDuplicateUserError:
+            return Response(
+                {
+                    "status": "user_duplicate",
+                    "message": "User with these credentials already exists in Traccar.",
+                },
+                status=409,
+            )
+        except requests.RequestException as e:
+            logger.exception("Traccar request error")
+            return Response({"error": str(e)}, status=502)
+        except Exception as e:
+            logger.exception("HandleUserDeviceLinkView error")
             return Response({"error": str(e)}, status=500)
 
-    def check_device_exists(self, request, unique_id):
-        url = f"{settings.TRACCAR_API_URL}/devices"
-        try:
-            response = requests.get(
-                url,
-                params={"uniqueId": unique_id},
-                auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
-                timeout=30
-            )
-            if response.status_code == 200:
-                try:
-                    logger.info(response.text)
-                    return response.json()  # Parse JSON response
-                except ValueError:
-                    logger.error(f"Invalid JSON response for device check: {response.text}")
-                    return {"exists": False, "error": "Invalid JSON response from Traccar."}
-            else:
-                logger.error(f"Failed to check device existence: {response.status_code} - {response.text}")
-                return {"exists": False, "error": f"Error checking device: {response.text}"}
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed while checking device: {str(e)}")
-            return {"exists": False, "error": str(e)}
+    # ---------- helpers ----------
 
-    def create_device(self, request, device_data):
-        url = f"{settings.TRACCAR_API_URL}/devices"
-        try:
-            response = requests.post(
-                url,
-                json=device_data,
-                auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
-                timeout=30
-            )
-            if response.status_code == 200:
-                return response  # Return the full response object for further handling
-            else:
-                logger.error(f"Failed to create device: {response.status_code} - {response.text}")
-                return Response({"error": f"Failed to create device: {response.text}"}, status=response.status_code)
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed while creating device: {str(e)}")
-            return Response({"error": str(e)}, status=500)
+    def _auth(self):
+        return HTTPBasicAuth(
+            settings.TRACCAR_API_USERNAME,
+            settings.TRACCAR_API_PASSWORD
+        )
 
-    def link_user_to_device(self, request, user_id, device_id):
+    def _find_user_by_phone(self, phone: str):
+        """
+        Find Traccar user by phone (or email == phone).
+        """
+        url = f"{settings.TRACCAR_API_URL}/users"
+        r = requests.get(url, auth=self._auth(), timeout=30)
+        r.raise_for_status()
+
+        data = r.json()
+        if isinstance(data, dict):
+            data = [data]
+
+        for u in data:
+            if u.get("phone") == phone or u.get("email") == phone:
+                return u
+        return None
+
+    def _create_traccar_user(self, payload: dict):
+        """
+        Create user in Traccar, with duplicate detection.
+        """
+        url = f"{settings.TRACCAR_API_URL}/users"
+        r = requests.post(url, json=payload, auth=self._auth(), timeout=30)
+
+        if r.status_code == 200:
+            return r.json()
+
+        # Detect duplicate user errors by constraint name or generic duplicate message
+        txt = r.text or ""
+        if "duplicate key value" in txt or "tc_users_" in txt:
+            logger.warning(f"Duplicate user in Traccar: {txt}")
+            raise TraccarDuplicateUserError()
+
+        logger.error(f"Failed to create user: {r.status_code} - {txt}")
+        raise Exception(f"Failed to create user: {txt}")
+
+    def _find_device_by_unique_id(self, unique_id: str):
+        """
+        Find Traccar device by uniqueId.
+        """
+        url = f"{settings.TRACCAR_API_URL}/devices"
+        r = requests.get(
+            url,
+            params={"uniqueId": unique_id},
+            auth=self._auth(),
+            timeout=30,
+        )
+        r.raise_for_status()
+
+        data = r.json()
+        if isinstance(data, dict):
+            data = [data]
+
+        if data:
+            return data[0]
+        return None
+
+    def _create_traccar_device(self, payload: dict):
+        """
+        Create device in Traccar, with duplicate uniqueId detection.
+        """
+        url = f"{settings.TRACCAR_API_URL}/devices"
+        r = requests.post(url, json=payload, auth=self._auth(), timeout=30)
+
+        if r.status_code == 200:
+            return r.json()
+
+        txt = r.text or ""
+        # Detect duplicate uniqueId error from Traccar / Postgres
+        if (
+            "tc_devices_uniqueid_key" in txt
+            or ("duplicate key value" in txt and "uniqueid" in txt.lower())
+        ):
+            logger.warning(f"Duplicate device uniqueId in Traccar: {txt}")
+            raise TraccarDuplicateDeviceError()
+
+        logger.error(f"Failed to create device: {r.status_code} - {txt}")
+        raise Exception(f"Failed to create device: {txt}")
+
+    def _link_user_device(self, user_id: int, device_id: int):
+        """
+        Link user and device in Traccar. Treat 200/201/204 as success.
+        """
         url = f"{settings.TRACCAR_API_URL}/permissions"
-        payload = {
-            "userId": user_id,
-            "deviceId": device_id
-        }
-        try:
-            response = requests.post(
-                url,
-                json=payload,
-                auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
-                timeout=30
-            )
-            if response.status_code == 200:
-                return response  # Return the full response object for further handling
-            else:
-                logger.error(f"Failed to link user to device: {response.status_code} - {response.text}")
-                return Response({"error": f"Failed to link user and device: {response.text}"}, status=response.status_code)
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed while linking user to device: {str(e)}")
-            return Response({"error": str(e)}, status=500)
+        payload = {"userId": user_id, "deviceId": device_id}
+        r = requests.post(url, json=payload, auth=self._auth(), timeout=30)
 
-    def send_session_request(self, request, user):
-        url = f"{settings.TRACCAR_API_URL}/session"
-        payload = {
-            "email": user.phone,
-            "password": user.raw_password
-        }
-        try:
-            response = requests.post(
-                url,
-                json=payload,
-                auth=HTTPBasicAuth(settings.TRACCAR_API_USERNAME, settings.TRACCAR_API_PASSWORD),
-                timeout=30
-            )
-            if response.status_code == 200:
-                return response  # Return the full response object for further handling
-            else:
-                logger.error(f"Failed to start session: {response.status_code} - {response.text}")
-                return Response({"error": f"Failed to start session: {response.text}"}, status=response.status_code)
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed while starting session: {str(e)}")
-            return Response({"error": str(e)}, status=500)
+        # Traccar often returns 204 No Content for successful permission changes
+        if r.status_code in (200, 201, 204):
+            return
+
+        logger.error(
+            "Failed to link user to device: %s - %s",
+            r.status_code,
+            r.text,
+        )
+        raise Exception(f"Failed to link user and device: {r.text}")
