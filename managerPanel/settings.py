@@ -258,7 +258,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # SANDBOX MODE
 
-MERCHANT = "0a36c5ed-3774-4631-ada6-39b885d738a4"
+MERCHANT = "9d25e9e8-65ef-11eb-aa02-000c295eb8fc"
 
 SANDBOX = False
 
@@ -269,7 +269,8 @@ AUTH_USER_MODEL = 'accounts.User'
 # CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
 # SecondCallbackURL = 'http://localhost:5173/payment-verify/'
 # CALLBACK_URL = "http://localhost:3037/payment-verify/"
-CALLBACK_URL = "https://app.uzradyab.ir/payment-verify/"
+#CALLBACK_URL = "https://app.uzradyab.ir/payment-verify/"
+CALLBACK_URL = "https://uzkala.com/uzradyab_verify/"
 # SECOND_CALLBACK_URL = "http://localhost:5173/payment-verify/"
 SECOND_CALLBACK_URL = "https://admin.uzradyab.ir/payment-verify/"
 
