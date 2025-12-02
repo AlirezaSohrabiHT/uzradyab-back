@@ -13,7 +13,6 @@ import os
 import pymysql
 pymysql.install_as_MySQLdb()
 from pathlib import Path
-from celery.schedules import crontab
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -156,7 +155,6 @@ INSTALLED_APPS = [
     'otpmanager',
     'services',
     'uzradyabHandler',
-    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -299,27 +297,3 @@ DATABASES = {
         'PORT': '5432',
     },
 }
-
-
-CELERY_BEAT_SCHEDULE = {
-    "check-expired-devices-every-6h": {
-        "task": "traccar_calls.tasks.run_check_expired_devices",
-        "schedule": crontab(minute=0, hour=2),
-    },
-    "send-expiry-sms-daily": {
-        "task": "traccar_calls.tasks.run_send_device_expiry_sms",
-        "schedule": crontab(minute=0, hour=18),
-    },
-}
-
-
-# CELERY_BEAT_SCHEDULE = {
-#     "check-expired-devices-every-2min": {
-#         "task": "traccar_calls.tasks.run_check_expired_devices",
-#         "schedule": timedelta(minutes=2),
-#     },
-#     "send-expiry-sms-every-2min": {
-#         "task": "traccar_calls.tasks.run_send_device_expiry_sms",
-#         "schedule": timedelta(minutes=2),
-#     },
-# }

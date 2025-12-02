@@ -11,45 +11,17 @@ services:
       - "36201:36201"
     environment:
       VITE_NOTIFICATION_URL: http://127.0.0.1:36201
-      CELERY_BROKER_URL: redis://127.0.0.1:6379/0   # 👈 point to your existing Redis
-      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/0
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:36201/health/')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
-  celery:
-    build:
-      context: .
-    command: celery -A managerPanel worker -l info
-    volumes:
-      - .:/app
-      - ./logs:/app/logs
-    environment:
-      CELERY_BROKER_URL: redis://127.0.0.1:6379/0
-      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/0
-    restart: unless-stopped
-    network_mode: host   # 👈 if you want direct host networking like web
-
-
-  celery-beat:
-    build:
-      context: .
-    # 1. REMOVE the --scheduler flag
-    # 2. ADD the -s flag to point to a persistent file location
-    command: celery -A managerPanel beat -l info -s /app/celerybeat-schedule/schedule
-    volumes:
-      - .:/app
-      - ./logs:/app/logs
-      - celery_beat_schedule:/app/celerybeat-schedule
-    environment:
-      CELERY_BROKER_URL: redis://127.0.0.1:6379/0
-      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/0
-    restart: unless-stopped
+  cron:
+    build: .
     network_mode: host
-
-volumes:
-  celery_beat_schedule:
+    command: python cron.py
+    volumes:
+      - .:/app
+      - ./logs:/logs
+    environment:
+      TZ: Asia/Tehran
+    restart: unless-stopped
+    depends_on:
+      - web
