@@ -76,16 +76,16 @@ if __name__ == "__main__":
     )
     
     scheduler.add_job(
-        lambda: run_command("check-expired-devices"),
+        lambda: run_command("check_expired_devices"),
         CronTrigger(hour=2, minute=0),  # every minute at second 0
-        id="check-expired-devices-every-6h",
+        id="check_expired_devices",
         replace_existing=True,
     )
 
     scheduler.add_job(
-        lambda: run_command("send-expiry-sms"),
+        lambda: run_command("send_device_expiry_sms"),
         CronTrigger(hour=18, minute=0),  # every minute at second 0
-        id="send-expiry-sms-daily",
+        id="send_device_expiry_sms",
         replace_existing=True,
     )
     
