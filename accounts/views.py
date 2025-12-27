@@ -4,7 +4,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.decorators import api_view, permission_classes
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -22,6 +22,28 @@ from otpmanager.views import send_otp, verify_otp
 auth_logger = logging.getLogger('authlogs')
 
 User = get_user_model()
+
+
+# Custom Permission Classes for user types
+class IsSupportUser(BasePermission):
+    """Permission class to check if user is support or admin"""
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.user_type in ['support', 'admin']
+        )
+
+
+class IsAdminUser(BasePermission):
+    """Permission class to check if user is admin"""
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.user_type == 'admin'
+        )
+
 
 def get_client_ip(request):
     """Get client IP address from request"""
@@ -113,11 +135,15 @@ def user_info(request):
     try:
         return Response(
             create_standard_response(True, "User information retrieved successfully.", {
-            'phone': user.phone,
-            'credit': user.credit,
-            'last_login': user.last_login,
-            'firstName': user.first_name,
-            'lastName': user.last_name
+                'phone': user.phone,
+                'credit': user.credit,
+                'last_login': user.last_login,
+                'firstName': user.first_name,
+                'lastName': user.last_name,
+                'user_type': user.user_type,  # Include user_type
+                'is_support': user.is_support,
+                'is_admin': user.is_admin,
+                'is_customer': user.is_customer,
             }),
             status=status.HTTP_200_OK
         )
@@ -190,7 +216,7 @@ def edit_profile(request):
 
     except ValidationError as e:
         return Response(
-            "اطلاعات وارد شده نامعتبر است." ,
+            "اطلاعات وارد شده نامعتبر است.",
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -205,6 +231,7 @@ def edit_profile(request):
             "خطای غیرمنتظره رخ داده است.",
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
 
 @api_view(['POST'])
 def reset_password(request):
@@ -282,6 +309,7 @@ def reset_password(request):
             status=status.HTTP_200_OK
         )
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def change_password(request):
@@ -339,7 +367,11 @@ class LoginView(APIView):
             'is_staff': user.is_staff,
             'is_superuser': user.is_superuser,
             'traccar_id': user.traccar_id,
-            'id': user.id
+            'id': user.id,
+            'user_type': user.user_type,  # Include user_type in response
+            'is_support': user.is_support,
+            'is_admin': user.is_admin,
+            'is_customer': user.is_customer,
         }, status=200)
 
 
@@ -405,17 +437,73 @@ class GenerateTraccarTokenView(APIView):
             "token": token,
             "traccar_id": traccar_id
         }, status=200)
-        
+
+
 class CheckTraccarTokenView(APIView):
-    authentication_classes = [TokenAuthentication]  # Token-based authentication
-    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # The authenticated user is now available as `request.user`
         user = request.user
         
-        # Check if the user has a Traccar token
         if user.traccar_token:
             return Response({"message": "User has a Traccar token."}, status=200)
         else:
             return Response({"message": "User does not have a Traccar token."}, status=200)
+
+
+# Support-only views
+class SupportDashboardView(APIView):
+    """Example view only accessible by support and admin users"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSupportUser]
+
+    def get(self, request):
+        return Response({
+            "message": "Welcome to Support Dashboard",
+            "user_type": request.user.user_type
+        }, status=200)
+
+
+# Admin-only views
+class AdminDashboardView(APIView):
+    """Example view only accessible by admin users"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        return Response({
+            "message": "Welcome to Admin Dashboard",
+            "user_type": request.user.user_type
+        }, status=200)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def update_user_type(request, user_id):
+    """Allow admins to change user types"""
+    new_user_type = request.data.get('user_type')
+    
+    if new_user_type not in ['customer', 'support', 'admin']:
+        return Response(
+            create_standard_response(False, "نوع کاربر نامعتبر است."),
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        user = User.objects.get(id=user_id)
+        user.user_type = new_user_type
+        user.save()
+        
+        return Response(
+            create_standard_response(True, "نوع کاربر با موفقیت تغییر یافت.", {
+                "user_id": user.id,
+                "new_user_type": user.user_type
+            }),
+            status=status.HTTP_200_OK
+        )
+    except User.DoesNotExist:
+        return Response(
+            create_standard_response(False, "کاربر یافت نشد."),
+            status=status.HTTP_404_NOT_FOUND
+        )

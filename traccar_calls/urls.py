@@ -1,7 +1,19 @@
-from django.urls import path
-from .views import HandleUserDeviceLinkView , CheckUserExistsView , FetchPositionsTimeRangeView , ChangeUserPasswordView , LinkUserToDeviceView , CreateTraccarDeviceView , CreateTraccarUserView , UpdateTraccarUserView , UpdateDeviceView , TraccarSessionView ,DeviceUsersView , FetchStatisticsView, FetchDriversView, FetchDevicesView , FetchUsersView
+from django.urls import path, include
+from .views import (
+    HandleUserDeviceLinkView, CheckUserExistsView, FetchPositionsTimeRangeView,
+    ChangeUserPasswordView, LinkUserToDeviceView, CreateTraccarDeviceView,
+    CreateTraccarUserView, UpdateTraccarUserView, UpdateDeviceView,
+    TraccarSessionView, DeviceUsersView, FetchStatisticsView, FetchDriversView,
+    FetchDevicesView, FetchUsersView
+)
+from .admin_views import (
+    AdminDeviceListView, AdminUserListView, AdminUpdateDeviceExpirationView,
+    AdminDeviceUsersView, AdminDashboardStatsView, AdminBulkExtendExpirationView   ,  AdminUpdateTraccarUserView,
+    AdminSendSMSView,
+)
 
 urlpatterns = [
+    # Existing URLs
     path('session/', TraccarSessionView.as_view(), name='traccar-session'),
     path('devices/', FetchDevicesView.as_view(), name='traccar-devices'),
     path('drivers/', FetchDriversView.as_view(), name='traccar-drivers'),
@@ -17,4 +29,14 @@ urlpatterns = [
     path('check-user-exists/', CheckUserExistsView.as_view(), name='change-user-exist'),
     path('positions/time-range/', FetchPositionsTimeRangeView.as_view(), name='positions-time-range'),
     path('handle-user-device/', HandleUserDeviceLinkView.as_view(), name='handle-user-device'),
+    
+    # Admin URLs - NEW
+    path('admin/stats/', AdminDashboardStatsView.as_view(), name='admin_stats'),
+    path('admin/devices/', AdminDeviceListView.as_view(), name='admin_devices'),
+    path('admin/devices/<int:device_id>/users/', AdminDeviceUsersView.as_view(), name='admin_device_users'),
+    path('admin/devices/<int:device_id>/expiration/', AdminUpdateDeviceExpirationView.as_view(), name='admin_device_expiration'),
+    path('admin/devices/bulk-extend/', AdminBulkExtendExpirationView.as_view(), name='admin_bulk_extend'),
+    path('admin/users/', AdminUserListView.as_view(), name='admin_users'),
+    path('admin/users/<int:user_id>/update/', AdminUpdateTraccarUserView.as_view(), name='admin_update_user'),
+    path('admin/send-sms/', AdminSendSMSView.as_view(), name='admin_send_sms'),
 ]
