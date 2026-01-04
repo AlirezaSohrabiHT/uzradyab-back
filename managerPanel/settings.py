@@ -284,8 +284,8 @@ DATABASES = {
         'NAME': 'uzradyab',
         'USER': 'uzradmin',
         'PASSWORD': 'T_3gBf1YDqQN]1o8',
-        #'HOST': '127.0.0.1',
-        'HOST' : '45.139.10.10',
+        'HOST': '127.0.0.1',
+        #'HOST' : '45.139.10.10',
         'PORT': '3306',
     },
     'device_user_db': {

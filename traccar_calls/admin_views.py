@@ -12,6 +12,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from requests.auth import HTTPBasicAuth
 import logging
+from .models import DeviceFollowUp , DeviceCallLog
 
 logger = logging.getLogger('main')
 
@@ -57,6 +58,7 @@ class AdminDeviceListView(APIView):
     permission_classes = [IsAuthenticated, IsSupportOrAdmin]
     pagination_class = AdminDevicePagination
 
+    
     def get(self, request):
         try:
             search = request.query_params.get('search', '').strip()
@@ -89,6 +91,36 @@ class AdminDeviceListView(APIView):
             """
             
             params = []
+            
+            followup_status = request.query_params.get("followup_status", "").strip()
+            allowed = {
+                DeviceFollowUp.STATUS_PENDING,
+                DeviceFollowUp.STATUS_CALLED,
+                DeviceFollowUp.STATUS_NO_ANSWER,
+            }
+
+            if followup_status in allowed:
+                followup_device_ids = list(
+                    DeviceFollowUp.objects
+                    .filter(status=followup_status)
+                    .values_list("device_id", flat=True)
+                )
+
+                # No matching devices → empty result (valid response)
+                if not followup_device_ids:
+                    return Response({
+                        "count": 0,
+                        "total_pages": 0,
+                        "current_page": page,
+                        "page_size": page_size,
+                        "next": False,
+                        "previous": page > 1,
+                        "results": []
+                    }, status=200)
+
+                placeholders = ",".join(["%s"] * len(followup_device_ids))
+                base_query += f" AND d.id IN ({placeholders})"
+                params.extend(followup_device_ids)
             
             if search:
                 base_query += """
@@ -175,6 +207,12 @@ class AdminDeviceListView(APIView):
                         devices_dict[device_id]['users'].append(user_info)
             
             devices_list = list(devices_dict.values())
+            device_ids = [d["id"] for d in devices_list]
+            followups = DeviceFollowUp.objects.filter(device_id__in=device_ids).values("device_id", "status")
+            status_map = {f["device_id"]: f["status"] for f in followups}
+
+            for d in devices_list:
+                d["followUpStatus"] = status_map.get(d["id"], DeviceFollowUp.STATUS_PENDING)
             total_pages = (total_count + page_size - 1) // page_size
             
             return Response({
@@ -678,3 +716,94 @@ class AdminBulkExtendExpirationView(APIView):
                 'error': str(e),
                 'message': 'خطا در تمدید گروهی'
             }, status=500)
+            
+
+class AdminDeviceFollowUpView(APIView):
+    permission_classes = [IsAuthenticated, IsSupportOrAdmin]
+
+    def get(self, request, device_id):
+        obj, _ = DeviceFollowUp.objects.get_or_create(device_id=device_id)
+        return Response({
+            "device_id": obj.device_id,
+            "status": obj.status,
+            "status_label": obj.get_status_display(),
+            "updated_at": obj.updated_at.isoformat() if obj.updated_at else None,
+            "updated_by": getattr(obj.updated_by, "id", None),
+        }, status=200)
+
+    def put(self, request, device_id):
+        new_status = request.data.get("status")
+        valid = {DeviceFollowUp.STATUS_PENDING, DeviceFollowUp.STATUS_CALLED, DeviceFollowUp.STATUS_NO_ANSWER}
+        if new_status not in valid:
+            return Response({"error": "Invalid status"}, status=400)
+
+        obj, _ = DeviceFollowUp.objects.get_or_create(device_id=device_id)
+        obj.status = new_status
+        obj.updated_by = request.user
+        obj.save()
+
+        return Response({
+            "success": True,
+            "device_id": obj.device_id,
+            "status": obj.status,
+            "status_label": obj.get_status_display(),
+            "updated_at": obj.updated_at.isoformat(),
+        }, status=200)
+        
+        
+class AdminDeviceCallLogView(APIView):
+    permission_classes = [IsAuthenticated, IsSupportOrAdmin]
+
+    def post(self, request, device_id):
+        status_value = request.data.get("status")
+        note = request.data.get("note", "").strip()
+
+        valid = {
+            DeviceFollowUp.STATUS_PENDING,
+            DeviceFollowUp.STATUS_CALLED,
+            DeviceFollowUp.STATUS_NO_ANSWER,
+        }
+        if status_value not in valid:
+            return Response({"error": "Invalid status"}, status=400)
+
+        # 1️⃣ Save call log (history)
+        DeviceCallLog.objects.create(
+            device_id=device_id,
+            status=status_value,
+            note=note,
+            created_by=request.user
+        )
+
+        # 2️⃣ Update current follow-up status
+        followup, _ = DeviceFollowUp.objects.get_or_create(device_id=device_id)
+        followup.status = status_value
+        followup.updated_by = request.user
+        followup.save()
+
+        return Response({"success": True}, status=201)
+
+
+
+class AdminDeviceCallHistoryView(APIView):
+    permission_classes = [IsAuthenticated, IsSupportOrAdmin]
+
+    def get(self, request, device_id):
+        logs = DeviceCallLog.objects.filter(device_id=device_id)[:20]
+
+        return Response([
+            {
+                "status": log.status,
+                "status_label": log.get_status_display(),
+                "note": log.note,
+                "created_at": log.created_at.isoformat(),
+                "created_by": (
+                    getattr(log.created_by, "get_full_name", lambda: "")().strip()
+                    or getattr(log.created_by, "name", None)
+                    or getattr(log.created_by, "full_name", None)
+                    or getattr(log.created_by, "phone", None)
+                    or getattr(log.created_by, "email", None)
+                    or getattr(log.created_by, "id", None)
+                ) if log.created_by else None
+            }
+            for log in logs
+        ], status=200)

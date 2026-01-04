@@ -419,17 +419,13 @@ class VerifyAPIView(APIView):
         traccar_id = data.get('traccar_id')
         service_id = data.get('service_id')
 
-        logger.info("Asdasdasd")
-        
         if not authority:
             return Response({'status': False, 'code': 'Authority not provided'})
 
         try:
-            # Retrieve the Payment object based on the authority code
             payment = Payment.objects.get(payment_code=authority)
-            amount = int(payment.amount)  # Convert to int for Zarinpal
-            
-            # Prepare verification data
+            amount = int(payment.amount)
+
             verification_data = {
                 "merchant_id": settings.MERCHANT,
                 "amount": amount,
@@ -437,65 +433,59 @@ class VerifyAPIView(APIView):
             }
             headers = {'content-type': 'application/json'}
 
-            # Send verification request to Zarinpal
-            response = requests.post(ZP_API_VERIFY, data=json.dumps(verification_data), headers=headers)
-            
-            if response.status_code == 200:
-                try:
-                    response_data = response.json()
-                    
-                    # Check if verification was successful
-                    if (isinstance(response_data.get('data'), dict) and 
-                        response_data['data'].get('code') in [100, 101]):
-                        
-                        # Update payment as successful
-                        payment.status = "موفق"
-                        payment.verification_code = response_data['data']['ref_id']
-                        payment.save()
-                        if payment_type == 'service':
-                            try:
-                                increase_balance(traccar_id, service_id)
-                                duration_days = 365
-                            except Exception as e:
-                                print(f"Warning: Failed to activate service: {e}")
+            response = requests.post(
+                ZP_API_VERIFY,
+                data=json.dumps(verification_data),
+                headers=headers
+            )
 
-                        else:
-                            # Update device expiration using utils
-                            try:
-                                update_expiration(payment.device_id_number, payment.account_charge.duration_days)
-                                duration_days = payment.account_charge.duration_day
-                            except Exception as e:
-                                print(f"Warning: Failed to update device expiration: {e}")
-                        
-                        return Response({
-                            'status': True,
-                            'RefID': response_data['data']['ref_id'],
-                            'duration_days': duration_days,
-                            'card_pan': response_data['data'].get('card_pan'),
-                            'fee': response_data['data'].get('fee'),
-                            'code': response_data['data'].get('code'),
-                            'message': response_data['data'].get('message'),
-                        })
-                    else:
-                        # Handle failed verification
-                        payment.status = "ناموفق"
-                        payment.save()
-                        
-                        error_code = response_data.get('data', {}).get('code', 'verification_failed')
-                        return Response({
-                            'status': False, 
-                            'code': error_code,
-                            'message': 'Payment verification failed'
-                        })
-                        
-                except ValueError:
-                    return Response({'status': False, 'code': 'invalid_json_response'})
-            else:
+            if response.status_code != 200:
                 return Response({'status': False, 'code': f'http_error_{response.status_code}'})
+
+            try:
+                response_data = response.json()
+            except ValueError:
+                return Response({'status': False, 'code': 'invalid_json_response'})
+
+            if not (isinstance(response_data.get('data'), dict) and response_data['data'].get('code') in [100, 101]):
+                payment.status = "ناموفق"
+                payment.save()
+                error_code = response_data.get('data', {}).get('code', 'verification_failed')
+                return Response({'status': False, 'code': error_code, 'message': 'Payment verification failed'})
+
+            # ✅ verified success
+            payment.status = "موفق"
+            payment.verification_code = response_data['data']['ref_id']
+            payment.save()
+
+            # ✅ ALWAYS define it before using it
+            duration_days = None
+
+            if payment_type == 'service':
+                # if service activation fails, return error (recommended)
+                increase_balance(traccar_id, service_id)
+                duration_days = 365
+            else:
+                # account charge
+                if not payment.account_charge:
+                    return Response({'status': False, 'code': 'account_charge_missing'})
+
+                update_expiration(payment.device_id_number, payment.account_charge.duration_days)
+                duration_days = payment.account_charge.duration_days  # ✅ plural
+
+            return Response({
+                'status': True,
+                'RefID': response_data['data']['ref_id'],
+                'duration_days': duration_days,
+                'card_pan': response_data['data'].get('card_pan'),
+                'fee': response_data['data'].get('fee'),
+                'code': response_data['data'].get('code'),
+                'message': response_data['data'].get('message'),
+            })
 
         except Payment.DoesNotExist:
             return Response({'status': False, 'code': 'payment_not_found'})
-        except requests.exceptions.RequestException as e:
+        except requests.exceptions.RequestException:
             return Response({'status': False, 'code': 'network_error'})
 
 

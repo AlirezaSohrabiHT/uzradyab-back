@@ -9,7 +9,7 @@ from .views import (
 from .admin_views import (
     AdminDeviceListView, AdminUserListView, AdminUpdateDeviceExpirationView,
     AdminDeviceUsersView, AdminDashboardStatsView, AdminBulkExtendExpirationView   ,  AdminUpdateTraccarUserView,
-    AdminSendSMSView,
+    AdminSendSMSView,AdminDeviceFollowUpView,AdminDeviceCallLogView,AdminDeviceCallHistoryView
 )
 
 urlpatterns = [
@@ -39,4 +39,8 @@ urlpatterns = [
     path('admin/users/', AdminUserListView.as_view(), name='admin_users'),
     path('admin/users/<int:user_id>/update/', AdminUpdateTraccarUserView.as_view(), name='admin_update_user'),
     path('admin/send-sms/', AdminSendSMSView.as_view(), name='admin_send_sms'),
+    path('admin/devices/<int:device_id>/followup/', AdminDeviceFollowUpView.as_view(), name='admin_device_followup'),
+    path("admin/devices/<int:device_id>/call-log/", AdminDeviceCallLogView.as_view()),
+    path("admin/devices/<int:device_id>/call-history/", AdminDeviceCallHistoryView.as_view()),
+
 ]

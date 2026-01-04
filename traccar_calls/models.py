@@ -2,6 +2,7 @@
 
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 
 class ExpiredDevice(models.Model):
     # User information
@@ -87,3 +88,60 @@ class ExpiredDevice(models.Model):
         self.sms_3_days_after_date = None
         self.sms_30_days_after_date = None
         self.save()
+
+
+class DeviceFollowUp(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_CALLED = "called"
+    STATUS_NO_ANSWER = "no_answer"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "در انتظار پیگیری"),
+        (STATUS_CALLED, "تماس گرفته شد"),
+        (STATUS_NO_ANSWER, "پاسخ داده نشده"),
+    ]
+
+    device_id = models.IntegerField(unique=True, db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="device_followups",
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return f"Device {self.device_id} - {self.get_status_display()}"
+
+
+class DeviceCallLog(models.Model):
+    device_id = models.IntegerField(db_index=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=DeviceFollowUp.STATUS_CHOICES
+    )
+
+    note = models.TextField(blank=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="device_call_logs"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Call device={self.device_id} status={self.status}"
