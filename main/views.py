@@ -199,7 +199,7 @@ class PayAPIView(APIView):
                     return Response({'error': 'Invalid service plan'}, status=400)
 
                 amount = int(service.price)
-                description = service.description
+                description = f"{uniqueId}"
                 callback_url = f"{settings.SECOND_CALLBACK_URL}"
 
                 # ✅ ensure these exist, but don't overwrite with 1
@@ -217,7 +217,7 @@ class PayAPIView(APIView):
                     return Response({'error': 'Invalid account charge plan'}, status=400)
 
                 amount = int(account_charge.amount)  # ✅ always use DB value
-                description = account_charge.description
+                description = f"{uniqueId}"
             
             mainLogger.info(f"The new payment create for user {request.user}")
             # Create Payment
