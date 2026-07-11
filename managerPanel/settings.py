@@ -10,15 +10,60 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
+import json
 import pymysql
 pymysql.install_as_MySQLdb()
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)
+
+
+def env_required(name):
+    value = os.getenv(name)
+    if value is None or value == '':
+        raise ImproperlyConfigured(f"Missing required environment variable: {name}")
+    return value
+
+
+def env_bool(name, default=False):
+    return os.getenv(name, str(default)).strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def env_list(name, default=None):
+    value = os.getenv(name)
+    if not value:
+        return default or []
+    return [item.strip() for item in value.split(',') if item.strip()]
+
+
+def env_key_value_list(name, default=None):
+    value = os.getenv(name)
+    if not value:
+        return default or []
+
+    try:
+        raw_items = json.loads(value)
+    except json.JSONDecodeError:
+        return default or []
+
+    if not isinstance(raw_items, list):
+        return default or []
+
+    items = []
+    for item in raw_items:
+        if isinstance(item, dict) and 'key' in item and 'value' in item:
+            items.append({
+                'key': str(item['key']),
+                'value': str(item['value']),
+            })
+    return items
 
 
 LOGGING = {
@@ -95,45 +140,31 @@ LOGGING = {
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!lz1ztarurm_u8(^k5lol_fp^5_59ap^w03lh!z-k^)3k_(svs'
+SECRET_KEY = env_required('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool('DEBUG', False)
 
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = env_list('ALLOWED_HOSTS')
 
-CELERY_BROKER_URL = "redis://redis:6379/0"  
-CELERY_RESULT_BACKEND = "redis://redis:6379/0"
-CELERY_TIMEZONE = "Asia/Tehran"   # or whatever your local timezone is
-CELERY_ENABLE_UTC = False
+CORS_ALLOWED_ORIGINS = env_list('CORS_ALLOWED_ORIGINS')
 
-CORS_ALLOWED_ORIGINS = [
-    "http://uzradyab.ir",
-    "https://app.uzradyab.ir",
-    "http://app.uzradyab.ir",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://localhost:3037",
-    'https://admin.uzradyab.ir',
-    'http://192.168.1.120',
-    'https://sipaad.exirfirm.com'
-]
-
-TRACCAR_API_URL = "https://app.uzradyab.ir/api"
+TRACCAR_API_URL = env_required('TRACCAR_API_URL')
 
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://app.uzradyab.ir',
-    'https://pay.uzradyab.ir',  # Add if you have requests originating from here as well
-    'http://localhost:3000',     # Add localhost for development
-    "http://localhost:5173",  # For development on localhost
-    "https://sipaad.exirfirm.com"
-]
+APP_NEW_RELEASE = env_bool('APP_NEW_RELEASE', False)
+APP_NEW_RELEASE_CODE = os.getenv('APP_NEW_RELEASE_CODE', '')
+APP_NEW_RELEASE_DESCRIPTION = env_key_value_list('APP_NEW_RELEASE_DESCRIPTION')
+APP_ALTERNATIVE_MAP = env_bool('APP_ALTERNATIVE_MAP', False)
+APP_ALTERNATIVE_MAP_URL = os.getenv('APP_ALTERNATIVE_MAP_URL', '')
 
-CSRF_COOKIE_SECURE = True  # Ensures CSRF cookies are only sent over HTTPS
-CSRF_COOKIE_SAMESITE = 'None'  # Allows the CSRF cookie to be sent cross-site
-SESSION_COOKIE_SECURE = True  # Ensures session cookies are only sent over HTTPS
+
+CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS')
+
+CSRF_COOKIE_SECURE = env_bool('CSRF_COOKIE_SECURE', True)
+CSRF_COOKIE_SAMESITE = env_required('CSRF_COOKIE_SAMESITE')
+SESSION_COOKIE_SECURE = env_bool('SESSION_COOKIE_SECURE', True)
 
 
 # Application definition
@@ -263,38 +294,30 @@ SANDBOX = False
 AUTH_USER_MODEL = 'accounts.User'
 
 
-# CallbackURL = 'https://app.uzradyab.ir/payment-verify/'  # Important: need to edit for real server.
-# CallbackURL = 'http://localhost:3037/payment-verify/'  # Important: need to edit for real server.
-# SecondCallbackURL = 'http://localhost:5173/payment-verify/'
-# CALLBACK_URL = "http://localhost:3037/payment-verify/"
-#CALLBACK_URL = "https://app.uzradyab.ir/payment-verify/"
-CALLBACK_URL = "https://uzkala.com/uzradyab_verify/"
-# SECOND_CALLBACK_URL = "http://localhost:5173/payment-verify/"
-SECOND_CALLBACK_URL = "https://admin.uzradyab.ir/payment-verify/"
+CALLBACK_URL = env_required('CALLBACK_URL')
+SECOND_CALLBACK_URL = env_required('SECOND_CALLBACK_URL')
 
-TRACCAR_API_USERNAME = "09156336261"
-TRACCAR_API_PASSWORD = "MTkKppOTdOsj"
-KAVENEGAR_API_KEY="415270574F5349545265306244503252575A44584C52614C69736C6C56437841"
+TRACCAR_API_USERNAME = env_required('TRACCAR_API_USERNAME')
+TRACCAR_API_PASSWORD = env_required('TRACCAR_API_PASSWORD')
+KAVENEGAR_API_KEY = env_required('KAVENEGAR_API_KEY')
 
 
 # local DB
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'uzradyab',
-        'USER': 'uzradmin',
-        'PASSWORD': 'T_3gBf1YDqQN]1o8',
-        #'HOST': '127.0.0.1',
-        'HOST' : '45.139.10.10',
-        'PORT': '3306',
+        'ENGINE': env_required('DB_ENGINE'),
+        'NAME': env_required('DB_NAME'),
+        'USER': env_required('DB_USER'),
+        'PASSWORD': env_required('DB_PASSWORD'),
+        'HOST': env_required('DB_HOST'),
+        'PORT': env_required('DB_PORT'),
     },
     'device_user_db': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'traccar1',
-        'USER': 'admin_traccar',
-        'PASSWORD': '3h4wfv7ue9re',
-        'HOST': '45.139.10.175',
-        #'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'ENGINE': env_required('TRACCAR_DB_ENGINE'),
+        'NAME': env_required('TRACCAR_DB_NAME'),
+        'USER': env_required('TRACCAR_DB_USER'),
+        'PASSWORD': env_required('TRACCAR_DB_PASSWORD'),
+        'HOST': env_required('TRACCAR_DB_HOST'),
+        'PORT': env_required('TRACCAR_DB_PORT'),
     },
 }

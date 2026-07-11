@@ -9,7 +9,6 @@ class UserManager(BaseUserManager):
         if not phone:
             raise ValueError('The phone number must be set')
         user = self.model(phone=phone, **extra_fields)
-        user.raw_password = password or ''  # <-- set raw password here
         user.set_password(password)
         user.save(using=self._db)
         return user

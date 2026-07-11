@@ -92,7 +92,7 @@ def buy_package(request):
         except AccountCharge.DoesNotExist:
             return Response(
                 {"success": False, "message": "پکیج مورد نظر یافت نشد."},
-                status=status.HTTP_404_BAD_REQUEST
+                status=status.HTTP_404_NOT_FOUND
             )
 
     except Exception as e:

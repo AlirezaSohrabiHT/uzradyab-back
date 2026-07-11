@@ -17,7 +17,7 @@ from django.contrib.auth import get_user_model
 import requests
 import logging
 from otpmanager.models import OTP
-from otpmanager.views import send_otp, verify_otp
+from otpmanager import utils as otp_utils
 
 auth_logger = logging.getLogger('authlogs')
 
@@ -264,7 +264,7 @@ def reset_password(request):
 
     # Step 2: Verify OTP
     if otp_code:
-        verified, message = verify_otp(phone_number, otp_code)
+        verified, message = otp_utils.verify_otp(phone_number, otp_code)
 
         if not verified:
             log_auth_attempt('reset_password', phone_number, False, 
@@ -296,7 +296,7 @@ def reset_password(request):
 
     # Step 1: Send OTP
     else:
-        success, msg = send_otp(phone_number)
+        success, msg = otp_utils.send_otp(phone_number)
 
         if not success:
             return Response(

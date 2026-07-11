@@ -25,14 +25,18 @@ class TraccarSessionView(APIView):
     def post(self, request):
         user = request.user
         url = f"{settings.TRACCAR_API_URL}/session"
+        password = request.data.get("password")
+
+        if not password:
+            return Response({"error": "Password is required."}, status=400)
 
         payload = {
             "email": user.phone,  # or map phone to email if needed
-            "password": user.raw_password
+            "password": password
         }
 
         try:
-            r = requests.post(url, json=payload)
+            r = requests.post(url, json=payload, timeout=30)
             if r.status_code == 200:
                 return Response(r.json(), status=200)
             return Response({"detail": r.text}, status=r.status_code)
@@ -727,10 +731,10 @@ class CheckUserExistsView(APIView):
 
             users = response.json()
 
-            # Step 2: Find user where email matches phone (same logic as ChangeUserPasswordView)
+            # Step 2: Find user where email or phone matches the supplied phone.
             target_user = None
             for user in users:
-                if user.get('email') == phone:
+                if user.get('email') == phone or user.get('phone') == phone:
                     target_user = user
                     break
 
