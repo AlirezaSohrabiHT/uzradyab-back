@@ -21,6 +21,8 @@ from django.core.exceptions import ImproperlyConfigured
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
+DJANGO_ENV = os.getenv('DJANGO_ENV', 'development').strip().lower()
+load_dotenv(BASE_DIR / f'.env.{DJANGO_ENV}', override=True)
 LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)
 
