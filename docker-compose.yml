@@ -4,6 +4,8 @@ services:
       context: .
     network_mode: host
     command: uvicorn managerPanel.asgi:application --host 0.0.0.0 --port 36201
+    env_file:
+      - .env.production
     volumes:
       - .:/app
       - ./logs:/app/logs
