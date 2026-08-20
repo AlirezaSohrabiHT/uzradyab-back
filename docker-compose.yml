@@ -3,9 +3,13 @@ services:
     build:
       context: .
     network_mode: host
-    command: uvicorn managerPanel.asgi:application --host 0.0.0.0 --port 36201
     env_file:
       - .env.production
+    command: uvicorn managerPanel.asgi:application --host 0.0.0.0 --port 36201
+
+    mem_limit: 512m
+    memswap_limit: 512m
+
     volumes:
       - .:/app
       - ./logs:/app/logs
@@ -19,6 +23,10 @@ services:
     build: .
     network_mode: host
     command: python cron.py
+
+    mem_limit: 512m
+    memswap_limit: 512m
+
     volumes:
       - .:/app
       - ./logs:/logs
