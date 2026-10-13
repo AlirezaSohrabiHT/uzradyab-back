@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.conf import settings
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
@@ -18,6 +19,7 @@ import requests
 import logging
 from otpmanager.models import OTP
 from otpmanager import utils as otp_utils
+from traccar_calls.client import traccar_request
 
 auth_logger = logging.getLogger('authlogs')
 
@@ -446,10 +448,32 @@ class CheckTraccarTokenView(APIView):
     def get(self, request):
         user = request.user
         
-        if user.traccar_token:
-            return Response({"message": "User has a Traccar token."}, status=200)
-        else:
-            return Response({"message": "User does not have a Traccar token."}, status=200)
+        if not user.traccar_token:
+            return Response({
+                "message": "User does not have a Traccar token.",
+                "valid": False, "requires_regeneration": True,
+            })
+
+        try:
+            response = traccar_request(
+                user, "get", f"{settings.TRACCAR_API_URL.rstrip('/')}/devices",
+                headers={"Authorization": f"Bearer {user.traccar_token}"},
+                params={"id": 0}, timeout=10, allow_redirects=False,
+            )
+        except requests.RequestException:
+            return Response({"message": "Unable to verify Traccar token."}, status=503)
+
+        if response.status_code == 200:
+            return Response({
+                "message": "User has a valid Traccar token.",
+                "valid": True, "requires_regeneration": False,
+            })
+        if response.status_code == 401:
+            return Response({
+                "message": "Traccar token is invalid or expired. Generate a new token.",
+                "valid": False, "requires_regeneration": True,
+            })
+        return Response({"message": "Unable to verify Traccar token."}, status=502)
 
 
 # Support-only views

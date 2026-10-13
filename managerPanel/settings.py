@@ -174,6 +174,8 @@ TOKEN_EXPIRATION_TIME = None
 INSTALLED_APPS = [
     'main',
     'rest_framework',
+    'drf_spectacular',
+
     'rest_framework.authtoken',
     'traccar_calls',
     "corsheaders",
@@ -204,6 +206,23 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'managerPanel.urls'
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'UZ Radyab Backend API',
+    'VERSION': '1.0.0',
+    'DESCRIPTION': 'Use Authorization: Token <backend-token>. Traccar tokens are separate. '
+                   'On a rejected Traccar token, request the user password and generate a new token.',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'APPEND_PATHS': {
+        '/health/': {'get': {'operationId': 'get_health', 'tags': ['health'],
+            'summary': 'Check database connectivity', 'security': [],
+            'responses': {'200': {'description': 'Healthy'}, '503': {'description': 'Database unavailable'}}}},
+        '/api/app-config/': {'get': {'operationId': 'get_app_config', 'tags': ['configuration'],
+            'summary': 'Application release and map configuration', 'security': [],
+            'responses': {'200': {'description': 'Application configuration'}}}},
+    },
+    'SWAGGER_UI_SETTINGS': {'persistAuthorization': False},
+}
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -223,6 +242,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'managerPanel.wsgi.application'
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'managerPanel.schema.BackendSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],

@@ -1,5 +1,6 @@
 from django.conf import settings
 import requests
+from traccar_calls.client import traccar_request
 import json
 from django.http import JsonResponse
 from rest_framework import status
@@ -77,7 +78,7 @@ def buy_package(request):
         "Authorization": f"Bearer {user.traccar_token}"
     }
     try:
-        response = requests.get(url, headers=headers)
+        response = traccar_request(request.user, "get", url, headers=headers)
         if response.status_code != 200:
             mainLogger.debug(f"An error occured while retrive device from traccar db")
             return Response({

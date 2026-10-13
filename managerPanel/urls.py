@@ -23,7 +23,11 @@ from main.views import PayAPIView, VerifyAPIView, AccountChargeAPIView, SendRequ
 from uzradyabHandler.views import ExpiredDevicesView 
 from health.views import app_config, health_check
 
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
 urlpatterns = [
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('admin/', admin.site.urls),
     path('pay/', PayAPIView.as_view(), name='pay'),
     path('request/', SendRequestAPIView.as_view(), name='request'),

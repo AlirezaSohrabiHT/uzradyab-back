@@ -17,6 +17,8 @@ from rest_framework import generics
 import requests
 from rest_framework.response import Response
 
+from traccar_calls.client import traccar_request
+
 logger = logging.getLogger('main')
 
 class TraccarSessionView(APIView):
@@ -61,7 +63,7 @@ class FetchDevicesView(generics.GenericAPIView):
         }
 
         try:
-            response = requests.get(url, headers=headers)
+            response = traccar_request(request.user, "get", url, headers=headers)
 
             if response.status_code != 200:
                 return Response({
@@ -119,7 +121,7 @@ class UpdateDeviceView(APIView):
 
         try:
             data = request.data
-            response = requests.put(url, json=data, headers=headers)
+            response = traccar_request(request.user, "put", url, json=data, headers=headers)
 
             if response.status_code == 200:
                 return Response(response.json(), status=200)
@@ -170,8 +172,8 @@ class FetchDriversView(APIView):
         }
 
         try:
-            response = requests.get(
-                url,
+            response = traccar_request(
+                request.user, "get", url,
                 params=params,
                 headers=headers
             )
@@ -249,7 +251,7 @@ class FetchUsersView(APIView):
         }
 
         try:
-            response = requests.get(url, headers=headers)
+            response = traccar_request(request.user, "get", url, headers=headers)
             if response.status_code != 200:
                 return Response({
                     "error": "Failed to fetch users.",
@@ -296,7 +298,7 @@ class UpdateTraccarUserView(APIView):
         data = request.data  # فرض می‌کنیم فرم کلاینت همه فیلدهای لازم را ارسال می‌کند
 
         try:
-            response = requests.put(url, json=data, headers=headers)
+            response = traccar_request(request.user, "put", url, json=data, headers=headers)
 
             if response.status_code == 200:
                 return Response(response.json(), status=status.HTTP_200_OK)
@@ -339,8 +341,8 @@ class FetchStatisticsView(APIView):
                 "Authorization": f"Bearer {user.traccar_token}"
             }
 
-            response = requests.get(
-                url,
+            response = traccar_request(
+                request.user, "get", url,
                 params=params,
                 headers=headers
             )
@@ -370,7 +372,7 @@ class CreateTraccarUserView(APIView):
         }
 
         try:
-            response = requests.post(url, json=request.data, headers=headers)
+            response = traccar_request(request.user, "post", url, json=request.data, headers=headers)
             if response.status_code == 200:
                 return Response(response.json(), status=200)
             return Response({
@@ -405,7 +407,7 @@ class CreateDeviceAndUserView(APIView):
             # Step 1: Check if device exists
             check_device_url = f"{base_url}/devices"
             params = {"uniqueId": unique_id}
-            response = requests.get(check_device_url, headers=auth_header, params=params)
+            response = traccar_request(request.user, "get", check_device_url, headers=auth_header, params=params)
 
             if response.status_code != 200:
                 return Response({
@@ -421,7 +423,7 @@ class CreateDeviceAndUserView(APIView):
 
             # Step 2: Create user
             create_user_url = f"{base_url}/users"
-            response = requests.post(create_user_url, headers=auth_header, json=user_data)
+            response = traccar_request(request.user, "post", create_user_url, headers=auth_header, json=user_data)
 
             if response.status_code != 200:
                 return Response({
@@ -434,7 +436,7 @@ class CreateDeviceAndUserView(APIView):
 
             # Step 3: Create device
             create_device_url = f"{base_url}/devices"
-            response = requests.post(create_device_url, headers=auth_header, json=device_data)
+            response = traccar_request(request.user, "post", create_device_url, headers=auth_header, json=device_data)
 
             if response.status_code != 200:
                 return Response({
@@ -452,7 +454,7 @@ class CreateDeviceAndUserView(APIView):
                 "deviceId": created_device_id
             }
 
-            response = requests.post(permission_url, headers=auth_header, json=link_payload)
+            response = traccar_request(request.user, "post", permission_url, headers=auth_header, json=link_payload)
 
             if response.status_code != 200:
                 return Response({
@@ -481,7 +483,7 @@ class CreateTraccarDeviceView(APIView):
         }
 
         try:
-            response = requests.post(url, json=request.data, headers=headers)
+            response = traccar_request(request.user, "post", url, json=request.data, headers=headers)
             if response.status_code == 200:
                 device_data = response.json()
                 return Response({
@@ -529,6 +531,11 @@ class DeviceUsersView(APIView):
             
             for user_id in user_ids:
                 user_details = self._get_user_details(user_id)
+                if not request.user.traccar_token:
+                    return Response({
+                        "error": "Traccar token is invalid or expired.",
+                        "requires_regeneration": True,
+                    }, status=401)
                 if user_details:
                     users.append(user_details)
             
@@ -564,7 +571,7 @@ class DeviceUsersView(APIView):
                 "Authorization": f"Bearer {token}"
             }
 
-            response = requests.get(url, headers=headers)
+            response = traccar_request(self.request.user, "get", url, headers=headers)
 
             if response.status_code == 200:
                 return response.json()
@@ -597,7 +604,7 @@ class LinkUserToDeviceView(APIView):
         }
 
         try:
-            response = requests.post(url, json=data, headers=headers)
+            response = traccar_request(request.user, "post", url, json=data, headers=headers)
 
             if response.status_code == 200:
                 return Response({"success": "User linked to device successfully"}, status=200)
